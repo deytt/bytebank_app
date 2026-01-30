@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,11 +21,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _valueController = TextEditingController();
-  
+
   TransactionType _type = TransactionType.expense;
   String _category = 'Alimentação';
   DateTime _date = DateTime.now();
-  File? _receiptFile;
+  XFile? _receiptFile;
 
   final List<String> _categories = [
     'Alimentação',
@@ -60,10 +60,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (pickedFile != null) {
       setState(() {
-        _receiptFile = File(pickedFile.path);
+        _receiptFile = pickedFile;
       });
     }
   }
@@ -75,7 +75,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
-    
+
     if (picked != null) {
       setState(() {
         _date = picked;
@@ -104,15 +104,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     bool success;
     if (widget.transaction == null) {
-      success = await transactionProvider.addTransaction(
-        transaction,
-        receiptFile: _receiptFile,
-      );
+      success = await transactionProvider.addTransaction(transaction, receiptFile: _receiptFile);
     } else {
-      success = await transactionProvider.updateTransaction(
-        transaction,
-        receiptFile: _receiptFile,
-      );
+      success = await transactionProvider.updateTransaction(transaction, receiptFile: _receiptFile);
     }
 
     if (success && mounted) {
@@ -120,18 +114,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.transaction == null
-                ? 'Transação adicionada'
-                : 'Transação atualizada',
+            widget.transaction == null ? 'Transação adicionada' : 'Transação atualizada',
           ),
         ),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            transactionProvider.errorMessage ?? 'Erro ao salvar transação',
-          ),
+          content: Text(transactionProvider.errorMessage ?? 'Erro ao salvar transação'),
           backgroundColor: Colors.red,
         ),
       );
@@ -144,9 +134,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final isEdit = widget.transaction != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? 'Editar Transação' : 'Nova Transação'),
-      ),
+      appBar: AppBar(title: Text(isEdit ? 'Editar Transação' : 'Nova Transação')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -181,13 +169,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Tipo',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 16,
-                ),
-              ),
+              const Text('Tipo', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
               const SizedBox(height: 8),
               SegmentedButton<TransactionType>(
                 segments: const [
@@ -214,10 +196,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 decoration: const InputDecoration(labelText: 'Categoria'),
                 initialValue: _category,
                 items: _categories.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category),
-                  );
+                  return DropdownMenuItem(value: category, child: Text(category));
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -236,42 +215,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               const SizedBox(height: 16),
               const Text(
                 'Recibo (opcional)',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
               ),
               const SizedBox(height: 8),
               if (_receiptFile != null)
-                Stack(
-                  children: [
-                    Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: FileImage(_receiptFile!),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          setState(() {
-                            _receiptFile = null;
-                          });
-                        },
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.black54,
-                        ),
-                      ),
-                    ),
-                  ],
+                _ReceiptPreview(
+                  receiptFile: _receiptFile!,
+                  onRemove: () {
+                    setState(() {
+                      _receiptFile = null;
+                    });
+                  },
                 )
               else if (widget.transaction?.receiptUrl != null)
                 const Card(
@@ -291,9 +245,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   onPressed: _pickImage,
                   icon: const Icon(Icons.upload_file),
                   label: const Text('Adicionar Recibo'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
                 ),
               const SizedBox(height: 24),
               SizedBox(
@@ -304,10 +256,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppTheme.white,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.white),
                         )
                       : Text(isEdit ? 'Atualizar' : 'Adicionar'),
                 ),
@@ -316,6 +265,47 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Widget helper para preview de recibo que funciona em todas as plataformas
+class _ReceiptPreview extends StatelessWidget {
+  final XFile receiptFile;
+  final VoidCallback onRemove;
+
+  const _ReceiptPreview({required this.receiptFile, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List>(
+      future: receiptFile.readAsBytes(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+          return Stack(
+            children: [
+              Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  image: DecorationImage(image: MemoryImage(snapshot.data!), fit: BoxFit.cover),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: onRemove,
+                  style: IconButton.styleFrom(backgroundColor: Colors.black54),
+                ),
+              ),
+            ],
+          );
+        }
+        return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+      },
     );
   }
 }

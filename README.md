@@ -1,73 +1,74 @@
 # Bytebank App
 
-Aplicação mobile de gerenciamento financeiro desenvolvida com Flutter, Firebase e Provider.
+Aplicação de gerenciamento financeiro desenvolvida com Flutter, Firebase e Provider.
 
 ## Descrição
 
 O Bytebank App é uma aplicação acadêmica para controle financeiro pessoal, permitindo que usuários registrem suas transações financeiras (receitas e despesas), anexem recibos e visualizem estatísticas através de um dashboard intuitivo.
 
+## Plataformas Suportadas
+
+- ✅ Android
+- ✅ iOS
+- ✅ Web
+
 ## Funcionalidades
 
 - **Autenticação**: Login e registro com email/senha via Firebase Authentication
-- **Gerenciamento de Transações**: 
+- **Gerenciamento de Transações**:
   - Adicionar, editar e excluir transações
   - Categorização (Alimentação, Transporte, Saúde, Educação, Lazer, Salário, Investimento, Outros)
   - Upload de recibos (até 30 MB)
   - Filtros por categoria e período
   - Paginação ao rolar a lista
-- **Dashboard**: 
+- **Dashboard**:
   - Visualização de saldo, receitas e despesas
   - Gráfico de pizza com distribuição financeira
   - Animações de entrada
 
 ## Tecnologias Utilizadas
 
-- **Flutter**: Framework de desenvolvimento mobile
+- **Flutter**: Framework de desenvolvimento mobile/web
 - **Firebase Authentication**: Autenticação de usuários
-- **Cloud Firestore**: Banco de dados NoSQL
-- **Firebase Storage**: Armazenamento de recibos
+- **Cloud Firestore**: Banco de dados NoSQL com índices
+- **Firebase Storage**: Armazenamento de recibos (upload via bytes para compatibilidade multiplataforma)
 - **Provider**: Gerenciamento de estado
 - **FL Chart**: Gráficos financeiros
-- **Image Picker**: Seleção de imagens
+- **Image Picker**: Seleção de imagens (XFile para compatibilidade Web/Mobile)
 
 ## Pré-requisitos
 
 - Flutter SDK (>=3.10.7)
 - Dart SDK
-- Android Studio / Xcode
+- Android Studio / Xcode (para emuladores)
+- Firebase CLI (opcional, para deploy de índices)
 - Conta Firebase
 
 ## Configuração Firebase
 
-1. Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
-2. Adicione um aplicativo Android com o ID: `com.postech.bytebankapp`
-3. Baixe o arquivo `google-services.json` e coloque em `android/app/`
-4. Para iOS, baixe o `GoogleService-Info.plist` e adicione ao projeto
-5. Ative os seguintes serviços no Firebase:
-   - Authentication (Email/Password)
-   - Cloud Firestore
-   - Storage
+✅ **Firebase já está configurado!**
 
-6. Configure as credenciais no arquivo `lib/core/firebase/firebase_config.dart`:
+**Projeto Firebase**: `bytebank-2778e`
 
-```dart
-static FirebaseOptions get firebaseOptions {
-  return const FirebaseOptions(
-    apiKey: 'SUA_API_KEY',
-    appId: 'SEU_APP_ID',
-    messagingSenderId: 'SEU_MESSAGING_SENDER_ID',
-    projectId: 'SEU_PROJECT_ID',
-    storageBucket: 'SEU_STORAGE_BUCKET',
-  );
-}
-```
+O projeto já possui:
+- ✅ `lib/firebase_options.dart` - Credenciais configuradas
+- ✅ `firestore.indexes.json` - Índices do Firestore
+- ✅ `firebase.json` - Configuração do projeto
+- ✅ `.firebaserc` - Referência ao projeto
+
+### Serviços Ativos
+
+Os seguintes serviços já estão ativos no [Console Firebase](https://console.firebase.google.com/project/bytebank-2778e):
+- ✅ **Authentication** (Email/Password)
+- ✅ **Cloud Firestore** (com índices)
+- ✅ **Firebase Storage**
 
 ## Instalação
 
 1. Clone o repositório:
 ```bash
 git clone <url-do-repositorio>
-cd bytebank_app
+cd bytebankapp
 ```
 
 2. Instale as dependências:
@@ -102,11 +103,12 @@ dependencies:
 lib/
  ├── main.dart
  ├── app.dart
+ ├── firebase_options.dart
  ├── core/
- │   ├── firebase/
- │   │   └── firebase_config.dart
- │   └── theme/
- │       └── app_theme.dart
+ │   ├── theme/
+ │   │   └── app_theme.dart
+ │   └── utils/
+ │       └── formatters.dart
  ├── models/
  │   ├── transaction_model.dart
  │   └── user_model.dart
@@ -130,34 +132,43 @@ lib/
      └── custom_input.dart
 ```
 
-## Regras de Firestore
+## Índices do Firestore
 
-Configure as seguintes regras no Firestore:
+✅ **Índices já estão configurados e implantados!**
 
+O arquivo `firestore.indexes.json` contém:
+- Índice para query por `userId` + ordenação por `date`
+- Índice para query por `userId` + `category` + ordenação por `date`
+
+Para reimplantar os índices (se necessário):
+```bash
+firebase deploy --only firestore:indexes
+```
+
+## Regras de Segurança
+
+### Firestore Rules
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /transactions/{transaction} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.userId;
     }
   }
 }
 ```
 
-## Regras de Storage
-
-Configure as seguintes regras no Storage:
-
+### Storage Rules
 ```javascript
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /receipts/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid == userId;
     }
   }
@@ -169,8 +180,8 @@ service firebase.storage {
 1. **Criar Conta**: Na tela inicial, clique em "Não tem uma conta? Criar" e preencha email e senha
 2. **Login**: Entre com suas credenciais
 3. **Dashboard**: Visualize seu saldo atual e estatísticas
-4. **Adicionar Transação**: 
-   - Clique no botão "+" 
+4. **Adicionar Transação**:
+   - Clique no botão "+"
    - Preencha título, valor, tipo, categoria e data
    - Opcionalmente, adicione um recibo
 5. **Ver Transações**: Clique em "Ver Transações" ou no ícone de lista
@@ -186,6 +197,51 @@ service firebase.storage {
 - Text Primary: #E1E1E6
 - Text Secondary: #C4C4CC
 - White: #FFFFFF
+
+## Comandos Úteis
+
+```bash
+# Limpar build
+flutter clean && flutter pub get
+
+# Análise de código
+flutter analyze
+
+# Executar app
+flutter run
+
+# Build APK (Android)
+flutter build apk --release
+
+# Build AAB (Google Play)
+flutter build appbundle --release
+
+# Build iOS
+flutter build ios --release
+
+# Build Web
+flutter build web --release
+
+# Deploy índices Firestore
+firebase deploy --only firestore:indexes
+```
+
+## Resolução de Problemas
+
+### Erro de índice do Firestore
+Se você ver um erro como `The query requires an index`:
+```bash
+firebase deploy --only firestore:indexes
+```
+
+### Layout overflow no TransactionCard
+✅ **Já corrigido!** O widget usa `Flexible` para evitar overflow de texto longo.
+
+### Erro de imagem na Web (`Unsupported operation: _Namespace`)
+✅ **Já corrigido!** O projeto usa `XFile` (do `image_picker`) e `MemoryImage` ao invés de `File` e `FileImage`, garantindo compatibilidade total com Web, Android e iOS.
+
+### Emulador sem Google Play Services
+Alguns avisos são normais em emuladores sem Play Store (App Check, ProviderInstaller). Eles não impedem o funcionamento do app.
 
 ## Autor
 

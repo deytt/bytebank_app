@@ -1,6 +1,6 @@
 {
-    "name": "bytebank_app",
-    "short_name": "bytebank_app",
+    "name": "bytebankapp",
+    "short_name": "bytebankapp",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

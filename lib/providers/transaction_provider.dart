@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/transaction_model.dart';
 import '../services/transaction_service.dart';
 import '../services/storage_service.dart';
@@ -7,7 +7,7 @@ import '../services/storage_service.dart';
 class TransactionProvider extends ChangeNotifier {
   final TransactionService _transactionService = TransactionService();
   final StorageService _storageService = StorageService();
-  
+
   List<TransactionModel> _transactions = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -37,10 +37,7 @@ class TransactionProvider extends ChangeNotifier {
     });
   }
 
-  Future<bool> addTransaction(
-    TransactionModel transaction, {
-    File? receiptFile,
-  }) async {
+  Future<bool> addTransaction(TransactionModel transaction, {XFile? receiptFile}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -48,15 +45,10 @@ class TransactionProvider extends ChangeNotifier {
     try {
       String? receiptUrl;
       if (receiptFile != null) {
-        receiptUrl = await _storageService.uploadReceipt(
-          receiptFile,
-          transaction.userId,
-        );
+        receiptUrl = await _storageService.uploadReceipt(receiptFile, transaction.userId);
       }
 
-      final transactionWithReceipt = transaction.copyWith(
-        receiptUrl: receiptUrl,
-      );
+      final transactionWithReceipt = transaction.copyWith(receiptUrl: receiptUrl);
 
       await _transactionService.addTransaction(transactionWithReceipt);
       _isLoading = false;
@@ -70,10 +62,7 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateTransaction(
-    TransactionModel transaction, {
-    File? receiptFile,
-  }) async {
+  Future<bool> updateTransaction(TransactionModel transaction, {XFile? receiptFile}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -86,16 +75,11 @@ class TransactionProvider extends ChangeNotifier {
         if (receiptUrl != null) {
           await _storageService.deleteReceipt(receiptUrl);
         }
-        
-        receiptUrl = await _storageService.uploadReceipt(
-          receiptFile,
-          transaction.userId,
-        );
+
+        receiptUrl = await _storageService.uploadReceipt(receiptFile, transaction.userId);
       }
 
-      final transactionWithReceipt = transaction.copyWith(
-        receiptUrl: receiptUrl,
-      );
+      final transactionWithReceipt = transaction.copyWith(receiptUrl: receiptUrl);
 
       await _transactionService.updateTransaction(transactionWithReceipt);
       _isLoading = false;
@@ -118,7 +102,7 @@ class TransactionProvider extends ChangeNotifier {
       if (transaction.receiptUrl != null) {
         await _storageService.deleteReceipt(transaction.receiptUrl!);
       }
-      
+
       await _transactionService.deleteTransaction(transaction.id!);
       _isLoading = false;
       notifyListeners();

@@ -8,19 +8,14 @@ class TransactionCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
-  const TransactionCard({
-    super.key,
-    required this.transaction,
-    this.onTap,
-    this.onDelete,
-  });
+  const TransactionCard({super.key, required this.transaction, this.onTap, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? Colors.green : Colors.red;
     final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -54,20 +49,17 @@ class TransactionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          transaction.category,
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 14,
+                        Flexible(
+                          child: Text(
+                            transaction.category,
+                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('dd/MM/yyyy').format(transaction.date),
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 14,
-                          ),
+                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                         ),
                       ],
                     ),
@@ -79,18 +71,10 @@ class TransactionCard extends StatelessWidget {
                 children: [
                   Text(
                     '${isIncome ? '+' : '-'} R\$ ${transaction.value.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   if (transaction.receiptUrl != null)
-                    const Icon(
-                      Icons.receipt,
-                      color: AppTheme.textSecondary,
-                      size: 16,
-                    ),
+                    const Icon(Icons.receipt, color: AppTheme.textSecondary, size: 16),
                 ],
               ),
               if (onDelete != null) ...[

@@ -1,0 +1,57 @@
+{
+  // ===============================
+  // Editor - Geral
+  // ===============================
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "boundary",
+  // ===============================
+  // Bracket Pair Colorizer / Nativo
+  // ===============================
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.guides.indentation": true,
+  // ===============================
+  // Error Lens
+  // ===============================
+  "errorLens.enabled": true,
+  "errorLens.fontWeight": "bold",
+  "errorLens.messageBackgroundMode": "message",
+  "errorLens.delay": 200,
+  "errorLens.exclude": [
+    "info"
+  ],
+  // ===============================
+  // Material Icon Theme
+  // ===============================
+  "workbench.iconTheme": "material-icon-theme",
+  "material-icon-theme.activeIconPack": "flutter",
+  // ===============================
+  // GitLens
+  // ===============================
+  "gitlens.currentLine.enabled": true,
+  "gitlens.currentLine.format": "{author}, {relativeTime}",
+  "gitlens.codeLens.enabled": false,
+  "gitlens.hovers.currentLine.over": "line",
+  // ===============================
+  // Dart / Flutter
+  // ===============================
+  "dart.lineLength": 100,
+  "dart.showTodos": true,
+  "dart.previewFlutterUiGuides": true,
+  "dart.previewFlutterUiGuidesCustomTracking": true,
+  "dart.enableSdkFormatter": true,
+  // ===============================
+  // Code Actions
+  // ===============================
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  // ===============================
+  // Files
+  // ===============================
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}
