@@ -283,17 +283,29 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                               ),
                             );
 
-                            if (confirm == true) {
+                            if (confirm == true && context.mounted) {
+                              final messenger = ScaffoldMessenger.of(context);
                               final success = await transactionProvider.deleteTransaction(
                                 transaction,
                               );
 
                               if (success) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Transação excluída')),
-                                  );
-                                }
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Transação excluída com sucesso'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      transactionProvider.errorMessage ??
+                                          'Erro ao excluir transação',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
                               }
                             }
                           },

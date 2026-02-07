@@ -110,16 +110,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       success = await transactionProvider.updateTransaction(transaction, receiptFile: _receiptFile);
     }
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (success) {
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
-            widget.transaction == null ? 'Transação adicionada' : 'Transação atualizada',
+            widget.transaction == null
+                ? 'Transação adicionada com sucesso'
+                : 'Transação atualizada com sucesso',
           ),
+          duration: const Duration(seconds: 2),
         ),
       );
-    } else if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(transactionProvider.errorMessage ?? 'Erro ao salvar transação'),

@@ -13,6 +13,10 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   AuthProvider() {
+    // Inicia sempre sem usuário (não carrega sessão persistida)
+    _user = null;
+
+    // Escuta mudanças de autenticação apenas para logins durante a sessão
     _authService.authStateChanges.listen((firebaseUser) {
       if (firebaseUser != null) {
         _user = UserModel(id: firebaseUser.uid, email: firebaseUser.email!);
