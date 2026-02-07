@@ -277,7 +277,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 }
 
-// Widget helper para preview de recibo que funciona em todas as plataformas
 class _ReceiptPreview extends StatelessWidget {
   final XFile receiptFile;
   final VoidCallback onRemove;

@@ -9,7 +9,7 @@ class TransactionService {
     try {
       await _firestore.collection(_collection).add(transaction.toMap());
     } catch (e) {
-      throw Exception('Erro ao adicionar transação: ${e.toString()}');
+      throw Exception('Erro ao adicionar transação');
     }
   }
 
@@ -20,7 +20,7 @@ class TransactionService {
       }
       await _firestore.collection(_collection).doc(transaction.id).update(transaction.toMap());
     } catch (e) {
-      throw Exception('Erro ao atualizar transação: ${e.toString()}');
+      throw Exception('Erro ao atualizar transação');
     }
   }
 
@@ -28,7 +28,7 @@ class TransactionService {
     try {
       await _firestore.collection(_collection).doc(id).delete();
     } catch (e) {
-      throw Exception('Erro ao deletar transação: ${e.toString()}');
+      throw Exception('Erro ao deletar transação');
     }
   }
 
@@ -41,13 +41,8 @@ class TransactionService {
     int limit = 20,
   }) async {
     try {
-      // Aumenta limit quando há filtro local (título ou recibo)
-      int effectiveLimit = limit;
-      if (searchTitle != null && searchTitle.isNotEmpty) {
-        effectiveLimit = limit * 5;
-      } else if (hasReceipt != null) {
-        effectiveLimit = limit * 2;
-      }
+      final hasLocalFilter = (searchTitle != null && searchTitle.isNotEmpty) || hasReceipt != null;
+      final effectiveLimit = hasLocalFilter ? 1000 : limit;
 
       Query query = _firestore
           .collection(_collection)
@@ -55,7 +50,7 @@ class TransactionService {
           .orderBy('date', descending: true)
           .limit(effectiveLimit);
 
-      if (lastDocument != null) {
+      if (!hasLocalFilter && lastDocument != null) {
         query = query.startAfterDocument(lastDocument);
       }
 
@@ -69,26 +64,25 @@ class TransactionService {
           .map((doc) => TransactionModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
 
-      // Filtros aplicados localmente (apenas para campos que não podem ser indexados)
       if (searchTitle != null && searchTitle.isNotEmpty) {
-        transactions = transactions.where((t) {
-          return t.title.toLowerCase().contains(searchTitle.toLowerCase());
-        }).toList();
+        transactions = transactions
+            .where((t) => t.title.toLowerCase().contains(searchTitle.toLowerCase()))
+            .toList();
       }
 
       if (hasReceipt != null) {
-        transactions = transactions.where((t) {
-          return hasReceipt ? t.receiptUrl != null : t.receiptUrl == null;
-        }).toList();
+        transactions = transactions
+            .where((t) => hasReceipt ? t.receiptUrl != null : t.receiptUrl == null)
+            .toList();
       }
 
       return {
-        'transactions': transactions.take(limit).toList(),
+        'transactions': transactions,
         'lastDocument': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
-        'hasMore': snapshot.docs.length >= effectiveLimit,
+        'hasMore': !hasLocalFilter && snapshot.docs.length >= limit,
       };
     } catch (e) {
-      throw Exception('Erro ao carregar transações: ${e.toString()}');
+      throw Exception('Erro ao carregar transações');
     }
   }
 }

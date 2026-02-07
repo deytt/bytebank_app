@@ -35,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       final authProvider = context.read<AuthProvider>();
       final transactionProvider = context.read<TransactionProvider>();
       if (authProvider.user != null) {
-        transactionProvider.loadAllTransactions(authProvider.user!.id);
+        transactionProvider.loadTransactions(authProvider.user!.id);
       }
     });
   }

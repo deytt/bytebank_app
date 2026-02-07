@@ -54,7 +54,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     final authProvider = context.read<AuthProvider>();
     final transactionProvider = context.read<TransactionProvider>();
     if (authProvider.user != null) {
-      transactionProvider.loadAllTransactions(authProvider.user!.id);
       transactionProvider.loadTransactions(authProvider.user!.id, refresh: true);
     }
   }
@@ -150,7 +149,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               ),
             ),
 
-            // Chips de filtros ativos
             if (_hasActiveFilters)
               Container(
                 height: 50,
@@ -207,7 +205,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 ),
               ),
 
-            // Lista de transações
             Expanded(
               child: transactionProvider.isLoading && transactions.isEmpty
                   ? const Center(child: CircularProgressIndicator())
@@ -230,7 +227,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                       itemCount: transactions.length + 1,
                       itemBuilder: (context, index) {
                         if (index == transactions.length) {
-                          // Indicador de carregamento no final da lista
                           if (transactionProvider.isLoadingMore) {
                             return const Padding(
                               padding: EdgeInsets.all(16),

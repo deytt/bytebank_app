@@ -16,54 +16,30 @@ class TransactionProvider extends ChangeNotifier {
   bool _hasMore = true;
   String? _errorMessage;
   DocumentSnapshot? _lastDocument;
-
-  // Filtros atuais
+  String? _currentUserId;
   String? _currentCategory;
   String? _currentSearchTitle;
   bool? _currentHasReceipt;
-  String? _currentUserId;
 
   List<TransactionModel> get transactions => _transactions;
-  List<TransactionModel> get allTransactions => _allTransactions;
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
-  String? get currentCategory => _currentCategory;
-  String? get currentSearchTitle => _currentSearchTitle;
-  bool? get currentHasReceipt => _currentHasReceipt;
 
   double get totalIncome {
-    final transactions = _allTransactions;
-    return transactions
+    return _allTransactions
         .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (acc, t) => acc + t.value);
+        .fold(0.0, (sum, t) => sum + t.value);
   }
 
   double get totalExpense {
-    final transactions = _allTransactions;
-    return transactions
+    return _allTransactions
         .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (acc, t) => acc + t.value);
+        .fold(0.0, (sum, t) => sum + t.value);
   }
 
   double get balance => totalIncome - totalExpense;
-
-  Future<void> loadAllTransactions(String userId) async {
-    try {
-      final result = await _transactionService.getTransactionsPaginated(
-        userId,
-        limit: 1000, // Carrega muitas para ter totais precisos
-      );
-
-      _allTransactions = (result['transactions'] as List<TransactionModel>?) ?? [];
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-      _allTransactions = [];
-      notifyListeners();
-    }
-  }
 
   Future<void> loadTransactions(
     String userId, {
@@ -99,6 +75,9 @@ class TransactionProvider extends ChangeNotifier {
       _transactions = result['transactions'] as List<TransactionModel>;
       _lastDocument = result['lastDocument'] as DocumentSnapshot?;
       _hasMore = result['hasMore'] as bool;
+
+      await _loadAllTransactions(userId);
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -111,6 +90,12 @@ class TransactionProvider extends ChangeNotifier {
   Future<void> loadMoreTransactions() async {
     if (_isLoadingMore || !_hasMore || _currentUserId == null) return;
 
+    final hasLocalFilter =
+        (_currentSearchTitle != null && _currentSearchTitle!.isNotEmpty) ||
+        _currentHasReceipt != null;
+
+    if (hasLocalFilter) return;
+
     _isLoadingMore = true;
     notifyListeners();
 
@@ -119,8 +104,6 @@ class TransactionProvider extends ChangeNotifier {
         _currentUserId!,
         lastDocument: _lastDocument,
         category: _currentCategory,
-        searchTitle: _currentSearchTitle,
-        hasReceipt: _currentHasReceipt,
       );
 
       final newTransactions = result['transactions'] as List<TransactionModel>;
@@ -136,8 +119,27 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransactions() async {
+  void clearFilters() {
+    _currentCategory = null;
+    _currentSearchTitle = null;
+    _currentHasReceipt = null;
     if (_currentUserId != null) {
+      loadTransactions(_currentUserId!, refresh: true);
+    }
+  }
+
+  Future<void> _loadAllTransactions(String userId) async {
+    try {
+      final result = await _transactionService.getTransactionsPaginated(userId, limit: 1000);
+      _allTransactions = result['transactions'] as List<TransactionModel>;
+    } catch (e) {
+      _allTransactions = [];
+    }
+  }
+
+  Future<void> _reloadTransactions() async {
+    if (_currentUserId != null) {
+      await _loadAllTransactions(_currentUserId!);
       await loadTransactions(
         _currentUserId!,
         category: _currentCategory,
@@ -145,15 +147,6 @@ class TransactionProvider extends ChangeNotifier {
         hasReceipt: _currentHasReceipt,
         refresh: true,
       );
-    }
-  }
-
-  void clearFilters() {
-    _currentCategory = null;
-    _currentSearchTitle = null;
-    _currentHasReceipt = null;
-    if (_currentUserId != null) {
-      loadTransactions(_currentUserId!, refresh: true);
     }
   }
 
@@ -169,14 +162,10 @@ class TransactionProvider extends ChangeNotifier {
       }
 
       final transactionWithReceipt = transaction.copyWith(receiptUrl: receiptUrl);
-
       await _transactionService.addTransaction(transactionWithReceipt);
+
       _isLoading = false;
-      // Recarregar transações após adicionar
-      if (_currentUserId != null) {
-        await loadAllTransactions(_currentUserId!);
-        await refreshTransactions();
-      }
+      await _reloadTransactions();
       notifyListeners();
       return true;
     } catch (e) {
@@ -196,23 +185,17 @@ class TransactionProvider extends ChangeNotifier {
       String? receiptUrl = transaction.receiptUrl;
 
       if (receiptFile != null) {
-        // Deletar recibo antigo se existir
         if (receiptUrl != null) {
           await _storageService.deleteReceipt(receiptUrl);
         }
-
         receiptUrl = await _storageService.uploadReceipt(receiptFile, transaction.userId);
       }
 
       final transactionWithReceipt = transaction.copyWith(receiptUrl: receiptUrl);
-
       await _transactionService.updateTransaction(transactionWithReceipt);
+
       _isLoading = false;
-      // Recarregar transações após atualizar
-      if (_currentUserId != null) {
-        await loadAllTransactions(_currentUserId!);
-        await refreshTransactions();
-      }
+      await _reloadTransactions();
       notifyListeners();
       return true;
     } catch (e) {
@@ -234,12 +217,9 @@ class TransactionProvider extends ChangeNotifier {
       }
 
       await _transactionService.deleteTransaction(transaction.id!);
+
       _isLoading = false;
-      // Recarregar transações após deletar
-      if (_currentUserId != null) {
-        await loadAllTransactions(_currentUserId!);
-        await refreshTransactions();
-      }
+      await _reloadTransactions();
       notifyListeners();
       return true;
     } catch (e) {

@@ -10,8 +10,6 @@ import 'providers/transaction_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Sempre faz logout ao iniciar o app (não persiste sessão)
   await firebase_auth.FirebaseAuth.instance.signOut();
 
   runApp(

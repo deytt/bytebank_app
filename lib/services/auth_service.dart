@@ -4,8 +4,6 @@ import '../models/user_model.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  User? get currentUser => _auth.currentUser;
-
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   Future<UserModel?> signIn(String email, String password) async {
@@ -17,7 +15,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      throw Exception('Erro ao fazer login: ${e.toString()}');
+      throw Exception('Erro ao fazer login');
     }
   }
 
@@ -33,7 +31,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      throw Exception('Erro ao criar conta: ${e.toString()}');
+      throw Exception('Erro ao criar conta');
     }
   }
 
