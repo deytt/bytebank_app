@@ -37,14 +37,14 @@ class TransactionProvider extends ChangeNotifier {
     final transactions = _allTransactions;
     return transactions
         .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (sum, t) => sum + t.value);
+        .fold(0.0, (acc, t) => acc + t.value);
   }
 
   double get totalExpense {
     final transactions = _allTransactions;
     return transactions
         .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (sum, t) => sum + t.value);
+        .fold(0.0, (acc, t) => acc + t.value);
   }
 
   double get balance => totalIncome - totalExpense;

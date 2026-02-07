@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../transactions/transaction_list_screen.dart';
@@ -45,16 +46,39 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     super.dispose();
   }
 
+  Future<void> _confirmLogout(BuildContext context) async {
+    final authProvider = context.read<AuthProvider>();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar logout'),
+        content: const Text('Deseja realmente sair da sua conta?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      authProvider.signOut();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
     final transactionProvider = context.watch<TransactionProvider>();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: () => authProvider.signOut()),
+          IconButton(icon: const Icon(Icons.logout), onPressed: () => _confirmLogout(context)),
         ],
       ),
       body: FadeTransition(
@@ -95,7 +119,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
             const SizedBox(height: 8),
             Text(
-              'R\$ ${provider.balance.toStringAsFixed(2)}',
+              Formatters.formatCurrency(provider.balance),
               style: TextStyle(
                 color: provider.balance >= 0 ? Colors.green : Colors.red,
                 fontSize: 36,
@@ -134,7 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
         const SizedBox(height: 4),
         Text(
-          'R\$ ${value.toStringAsFixed(2)}',
+          Formatters.formatCurrency(value),
           style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ],

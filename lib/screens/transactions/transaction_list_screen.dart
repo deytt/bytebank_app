@@ -335,6 +335,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
                     ChoiceChip(
                       label: const Text('Todas'),
@@ -363,6 +364,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
                     ChoiceChip(
                       label: const Text('Todos'),

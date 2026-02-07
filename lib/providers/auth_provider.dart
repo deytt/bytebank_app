@@ -15,10 +15,7 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider() {
     _authService.authStateChanges.listen((firebaseUser) {
       if (firebaseUser != null) {
-        _user = UserModel(
-          id: firebaseUser.uid,
-          email: firebaseUser.email!,
-        );
+        _user = UserModel(id: firebaseUser.uid, email: firebaseUser.email!);
       } else {
         _user = null;
       }
