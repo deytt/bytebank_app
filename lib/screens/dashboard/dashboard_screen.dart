@@ -13,8 +13,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> 
-    with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -25,16 +24,19 @@ class _DashboardScreenState extends State<DashboardScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeIn));
     _animationController.forward();
 
-    final authProvider = context.read<AuthProvider>();
-    final transactionProvider = context.read<TransactionProvider>();
-    if (authProvider.user != null) {
-      transactionProvider.loadTransactions(authProvider.user!.id);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      final transactionProvider = context.read<TransactionProvider>();
+      if (authProvider.user != null) {
+        transactionProvider.loadAllTransactions(authProvider.user!.id);
+      }
+    });
   }
 
   @override
@@ -52,10 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => authProvider.signOut(),
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: () => authProvider.signOut()),
         ],
       ),
       body: FadeTransition(
@@ -76,12 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const TransactionListScreen(),
-            ),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const TransactionListScreen()));
         },
         backgroundColor: AppTheme.primary,
         child: const Icon(Icons.list),
@@ -97,10 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             const Text(
               'Saldo Atual',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
@@ -135,31 +126,16 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildBalanceItem(
-    String label,
-    double value,
-    Color color,
-    IconData icon,
-  ) {
+  Widget _buildBalanceItem(String label, double value, Color color, IconData icon) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
         const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 14,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
         const SizedBox(height: 4),
         Text(
           'R\$ ${value.toStringAsFixed(2)}',
-          style: TextStyle(
-            color: color,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -178,10 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: const [
                 Icon(Icons.pie_chart, size: 64, color: AppTheme.textSecondary),
                 SizedBox(height: 16),
-                Text(
-                  'Nenhuma transação ainda',
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
+                Text('Nenhuma transação ainda', style: TextStyle(color: AppTheme.textSecondary)),
               ],
             ),
           ),
@@ -249,29 +222,18 @@ class _DashboardScreenState extends State<DashboardScreen>
       children: [
         const Text(
           'Ações Rápidas',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: _buildActionButton(
-                context,
-                'Ver Transações',
-                Icons.list,
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const TransactionListScreen(),
-                    ),
-                  );
-                },
-              ),
+              child: _buildActionButton(context, 'Ver Transações', Icons.list, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TransactionListScreen()),
+                );
+              }),
             ),
           ],
         ),
@@ -298,10 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
               ),
             ],
           ),
