@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
 
 class CustomInput extends StatelessWidget {
@@ -9,6 +10,7 @@ class CustomInput extends StatelessWidget {
   final String? Function(String?)? validator;
   final int maxLines;
   final Widget? suffixIcon;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomInput({
     super.key,
@@ -19,6 +21,7 @@ class CustomInput extends StatelessWidget {
     this.validator,
     this.maxLines = 1,
     this.suffixIcon,
+    this.inputFormatters,
   });
 
   @override
@@ -29,11 +32,9 @@ class CustomInput extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
       style: const TextStyle(color: AppTheme.textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        suffixIcon: suffixIcon,
-      ),
+      decoration: InputDecoration(labelText: label, suffixIcon: suffixIcon),
     );
   }
 }
