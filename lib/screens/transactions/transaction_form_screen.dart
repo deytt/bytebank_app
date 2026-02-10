@@ -193,7 +193,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   ),
                 ],
                 selected: {_type},
-                onSelectionChanged: (Set<TransactionType> newSelection) {
+                onSelectionChanged: (newSelection) {
                   setState(() {
                     _type = newSelection.first;
                   });
