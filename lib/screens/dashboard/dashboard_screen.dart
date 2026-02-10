@@ -170,12 +170,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final expense = provider.totalExpense;
 
     if (income == 0 && expense == 0) {
-      return Card(
+      return const Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Center(
             child: Column(
-              children: const [
+              children: [
                 Icon(Icons.pie_chart, size: 64, color: AppTheme.textSecondary),
                 SizedBox(height: 16),
                 Text('Nenhuma transação ainda', style: TextStyle(color: AppTheme.textSecondary)),
