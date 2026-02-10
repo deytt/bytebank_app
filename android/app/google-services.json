@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1093070321011",
+    "project_id": "bytebank-2778e",
+    "storage_bucket": "bytebank-2778e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093070321011:android:3ca1dadb2e7c73996cc106",
+        "android_client_info": {
+          "package_name": "com.postech.bytebankapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5wScl54SDSsio9NXHk-26zVbc9b_bjqk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

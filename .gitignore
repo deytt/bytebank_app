@@ -51,8 +51,6 @@ firebase-debug.log
 firebase-debug.*.log
 firepit-log.txt
 .firebase/
-**/google-services.json
-**/GoogleService-Info.plist
 
 # Environment files
 .env
@@ -75,6 +73,4 @@ firepit-log.txt
 **/web/flutter_service_worker.js
 **/web/version.json
 
-# Sensitive data (uncomment if needed)
-# lib/firebase_options.dart
 devtools_options.yaml
