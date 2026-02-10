@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/transaction_model.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/formatters.dart';
 
 class TransactionCard extends StatelessWidget {
   final TransactionModel transaction;
@@ -70,7 +71,7 @@ class TransactionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${isIncome ? '+' : '-'} R\$ ${transaction.value.toStringAsFixed(2)}',
+                    '${isIncome ? '+' : '-'} ${Formatters.formatCurrency(transaction.value)}',
                     style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   if (transaction.receiptUrl != null)
