@@ -1,235 +1,117 @@
 # Bytebank App
 
-Aplicação de gerenciamento financeiro desenvolvida com Flutter, Firebase e Provider.
+Aplicação mobile de gerenciamento financeiro desenvolvida com Flutter e Firebase.
 
-## Descrição
+## 📱 Descrição
 
-O Bytebank App é uma aplicação acadêmica para controle financeiro pessoal, permitindo que usuários registrem suas transações financeiras (receitas e despesas), anexem recibos e visualizem estatísticas através de um dashboard intuitivo.
+O Bytebank App é uma aplicação acadêmica para controle financeiro pessoal, permitindo que usuários registrem transações (receitas e despesas), anexem recibos e visualizem estatísticas em um dashboard.
 
-## Plataformas Suportadas
+## ✨ Funcionalidades
 
-- ✅ Android
-- ✅ iOS
-- ✅ Web
+- **Autenticação**: Login e cadastro com email/senha
+- **Transações**: Criar, editar e excluir transações com upload de recibos
+- **Dashboard**: Visualização de saldo, receitas, despesas e gráfico
+- **Filtros**: Buscar por título, categoria ou presença de recibo
+- **Paginação**: Carregamento progressivo de transações
 
-## Funcionalidades
+## 🛠️ Tecnologias
 
-- **Autenticação**: Login e registro com email/senha via Firebase Authentication
-- **Gerenciamento de Transações**:
-  - Adicionar, editar e excluir transações
-  - Categorização (Alimentação, Transporte, Saúde, Educação, Lazer, Salário, Investimento, Outros)
-  - Upload de recibos (até 30 MB)
-  - Filtros por categoria e período
-  - Paginação ao rolar a lista
-- **Dashboard**:
-  - Visualização de saldo, receitas e despesas
-  - Gráfico de pizza com distribuição financeira
-  - Animações de entrada
+- **Flutter** - Framework mobile
+- **Firebase Auth** - Autenticação
+- **Cloud Firestore** - Banco de dados
+- **Firebase Storage** - Armazenamento de recibos
+- **Provider** - Gerenciamento de estado
+- **FL Chart** - Gráficos
 
-## Tecnologias Utilizadas
+## 📦 Instalação
 
-- **Flutter**: Framework de desenvolvimento mobile/web
-- **Firebase Authentication**: Autenticação de usuários
-- **Cloud Firestore**: Banco de dados NoSQL com índices
-- **Firebase Storage**: Armazenamento de recibos (upload via bytes para compatibilidade multiplataforma)
-- **Provider**: Gerenciamento de estado
-- **FL Chart**: Gráficos financeiros
-- **Image Picker**: Seleção de imagens (XFile para compatibilidade Web/Mobile)
-
-## Pré-requisitos
-
-- Flutter SDK (>=3.10.7)
-- Dart SDK
-- Android Studio / Xcode (para emuladores)
-- Firebase CLI (opcional, para deploy de índices)
-- Conta Firebase
-
-## Configuração Firebase
-
-✅ **Firebase já está configurado!**
-
-**Projeto Firebase**: `bytebank-2778e`
-
-O projeto já possui:
-- ✅ `lib/firebase_options.dart` - Credenciais configuradas
-- ✅ `firestore.indexes.json` - Índices do Firestore
-- ✅ `firebase.json` - Configuração do projeto
-- ✅ `.firebaserc` - Referência ao projeto
-
-### Serviços Ativos
-
-Os seguintes serviços já estão ativos no [Console Firebase](https://console.firebase.google.com/project/bytebank-2778e):
-- ✅ **Authentication** (Email/Password)
-- ✅ **Cloud Firestore** (com índices)
-- ✅ **Firebase Storage**
-
-## Instalação
-
-1. Clone o repositório:
 ```bash
+# Clone o repositório
 git clone <url-do-repositorio>
-cd bytebankapp
-```
+cd bytebank_app
 
-2. Instale as dependências:
-```bash
+# Instale as dependências
 flutter pub get
-```
 
-3. Configure o Firebase conforme instruções acima
-
-4. Execute o aplicativo:
-```bash
+# Execute o app
 flutter run
 ```
 
-## Dependências Principais
+## 🔥 Firebase
 
-```yaml
-dependencies:
-  firebase_core: ^3.8.1
-  firebase_auth: ^5.3.4
-  cloud_firestore: ^5.5.2
-  firebase_storage: ^12.3.7
-  provider: ^6.1.2
-  fl_chart: ^0.70.2
-  intl: ^0.20.1
-  image_picker: ^1.1.2
-```
+O projeto já está configurado com Firebase. Os arquivos necessários estão incluídos:
+- `lib/firebase_options.dart` - Credenciais
+- `android/app/google-services.json` - Configuração Android
+- `ios/Runner/GoogleService-Info.plist` - Configuração iOS
 
-## Estrutura de Pastas
+**Console Firebase**: https://console.firebase.google.com/project/bytebank-2778e
+
+## 📂 Estrutura
 
 ```
 lib/
- ├── main.dart
- ├── app.dart
- ├── firebase_options.dart
- ├── core/
- │   ├── theme/
- │   │   └── app_theme.dart
- │   └── utils/
- │       └── formatters.dart
- ├── models/
- │   ├── transaction_model.dart
- │   └── user_model.dart
- ├── providers/
- │   ├── auth_provider.dart
- │   └── transaction_provider.dart
- ├── services/
- │   ├── auth_service.dart
- │   ├── transaction_service.dart
- │   └── storage_service.dart
- ├── screens/
- │   ├── login/
- │   │   └── login_screen.dart
- │   ├── dashboard/
- │   │   └── dashboard_screen.dart
- │   └── transactions/
- │       ├── transaction_list_screen.dart
- │       └── transaction_form_screen.dart
- └── widgets/
-     ├── transaction_card.dart
-     └── custom_input.dart
+├── main.dart                      # Ponto de entrada
+├── app.dart                       # Widget principal
+├── core/
+│   ├── theme/
+│   │   └── app_theme.dart         # Tema
+│   └── utils/
+│       └── formatters.dart        # Formatadores
+├── models/
+│   ├── transaction_model.dart     # Modelo de transação
+│   └── user_model.dart            # Modelo de usuário
+├── providers/
+│   ├── auth_provider.dart         # Provider de autenticação
+│   └── transaction_provider.dart  # Provider de transações
+├── services/
+│   ├── auth_service.dart          # Serviço de autenticação
+│   ├── transaction_service.dart   # Serviço de transações
+│   └── storage_service.dart       # Serviço de storage
+├── screens/
+│   ├── splash/
+│   │   └── splash_screen.dart     # Splash screen
+│   ├── login/
+│   │   └── login_screen.dart      # Login
+│   ├── dashboard/
+│   │   └── dashboard_screen.dart  # Dashboard
+│   └── transactions/
+│       ├── transaction_list_screen.dart   # Lista
+│       └── transaction_form_screen.dart   # Formulário
+└── widgets/
+    ├── transaction_card.dart      # Card de transação
+    └── custom_input.dart          # Input customizado
 ```
 
-## Índices do Firestore
+## 🎨 Categorias
 
-✅ **Índices já estão configurados e implantados!**
+- Alimentação
+- Transporte
+- Saúde
+- Educação
+- Lazer
+- Salário
+- Investimento
+- Outros
 
-O arquivo `firestore.indexes.json` contém:
-- Índice para query por `userId` + ordenação por `date`
-- Índice para query por `userId` + `category` + ordenação por `date`
-
-Para reimplantar os índices (se necessário):
-```bash
-firebase deploy --only firestore:indexes
-```
-
-## Regras de Segurança
-
-### Firestore Rules
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /transactions/{transaction} {
-      allow read, write: if request.auth != null &&
-        request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null &&
-        request.auth.uid == request.resource.data.userId;
-    }
-  }
-}
-```
-
-### Storage Rules
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /receipts/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null &&
-        request.auth.uid == userId;
-    }
-  }
-}
-```
-
-## Como Usar
-
-1. **Criar Conta**: Na tela inicial, clique em "Não tem uma conta? Criar" e preencha email e senha
-2. **Login**: Entre com suas credenciais
-3. **Dashboard**: Visualize seu saldo atual e estatísticas
-4. **Adicionar Transação**:
-   - Clique no botão "+"
-   - Preencha título, valor, tipo, categoria e data
-   - Opcionalmente, adicione um recibo
-5. **Ver Transações**: Clique em "Ver Transações" ou no ícone de lista
-6. **Filtrar**: Use o ícone de filtro para filtrar por categoria
-7. **Editar/Excluir**: Toque em uma transação para editar ou use o ícone de lixeira para excluir
-
-## Cores do Tema
-
-- Primary: #4C1D95
-- Primary Light: #6D28D9
-- Background: #09090B
-- Surface: #202024
-- Text Primary: #E1E1E6
-- Text Secondary: #C4C4CC
-- White: #FFFFFF
-
-## Comandos Úteis
+## 🚀 Comandos Úteis
 
 ```bash
-# Limpar build
+# Limpar cache
 flutter clean && flutter pub get
 
 # Análise de código
 flutter analyze
 
-# Executar app
-flutter run
-
-# Build APK (Android)
+# Build Android
 flutter build apk --release
-
-# Build AAB (Google Play)
-flutter build appbundle --release
 
 # Build iOS
 flutter build ios --release
 
 # Build Web
 flutter build web --release
-
-# Deploy índices Firestore
-firebase deploy --only firestore:indexes
 ```
 
-## Autor
+## 📄 Licença
 
-Projeto acadêmico desenvolvido para demonstração de conceitos de desenvolvimento mobile com Flutter e Firebase.
-
-## Licença
-
-Este projeto é de uso acadêmico.
+Projeto acadêmico de código aberto.
