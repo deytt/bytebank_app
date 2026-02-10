@@ -67,13 +67,14 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   void _applyFilters() {
     final authProvider = context.read<AuthProvider>();
     final transactionProvider = context.read<TransactionProvider>();
+    final user = authProvider.user;
 
-    if (authProvider.user != null) {
+    if (user != null) {
       final searchText = _searchController.text.trim();
       final searchTitle = (searchText.isEmpty || searchText.length < 3) ? null : searchText;
 
       transactionProvider.loadTransactions(
-        authProvider.user!.id,
+        user.id,
         category: _selectedCategory,
         searchTitle: searchTitle,
         hasReceipt: _hasReceipt,
@@ -209,10 +210,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               child: transactionProvider.isLoading && transactions.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : transactions.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.receipt_long, size: 64, color: AppTheme.textSecondary),
                           SizedBox(height: 16),
                           Text(
