@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/transaction_model.dart';
 import '../services/transaction_service.dart';
 import '../services/storage_service.dart';
@@ -9,32 +10,144 @@ class TransactionProvider extends ChangeNotifier {
   final StorageService _storageService = StorageService();
 
   List<TransactionModel> _transactions = [];
+  List<TransactionModel> _allTransactions = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
   String? _errorMessage;
+  DocumentSnapshot? _lastDocument;
+  String? _currentUserId;
+  String? _currentCategory;
+  String? _currentSearchTitle;
+  bool? _currentHasReceipt;
 
   List<TransactionModel> get transactions => _transactions;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
 
   double get totalIncome {
-    return _transactions
+    return _allTransactions
         .where((t) => t.type == TransactionType.income)
-        .fold(0, (sum, t) => sum + t.value);
+        .fold(0.0, (sum, t) => sum + t.value);
   }
 
   double get totalExpense {
-    return _transactions
+    return _allTransactions
         .where((t) => t.type == TransactionType.expense)
-        .fold(0, (sum, t) => sum + t.value);
+        .fold(0.0, (sum, t) => sum + t.value);
   }
 
   double get balance => totalIncome - totalExpense;
 
-  void loadTransactions(String userId) {
-    _transactionService.getTransactions(userId).listen((transactions) {
-      _transactions = transactions;
+  Future<void> loadTransactions(
+    String userId, {
+    String? category,
+    String? searchTitle,
+    bool? hasReceipt,
+    bool refresh = false,
+  }) async {
+    if (refresh) {
+      _transactions = [];
+      _lastDocument = null;
+      _hasMore = true;
+    }
+
+    if (_isLoading || (!_hasMore && !refresh)) return;
+
+    _isLoading = true;
+    _errorMessage = null;
+    _currentUserId = userId;
+    _currentCategory = category;
+    _currentSearchTitle = searchTitle;
+    _currentHasReceipt = hasReceipt;
+    notifyListeners();
+
+    try {
+      final result = await _transactionService.getTransactionsPaginated(
+        userId,
+        category: category,
+        searchTitle: searchTitle,
+        hasReceipt: hasReceipt,
+      );
+
+      _transactions = result['transactions'] as List<TransactionModel>;
+      _lastDocument = result['lastDocument'] as DocumentSnapshot?;
+      _hasMore = result['hasMore'] as bool;
+
+      await _loadAllTransactions(userId);
+
+      _isLoading = false;
       notifyListeners();
-    });
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMoreTransactions() async {
+    if (_isLoadingMore || !_hasMore || _currentUserId == null) return;
+
+    final hasLocalFilter =
+        (_currentSearchTitle != null && _currentSearchTitle!.isNotEmpty) ||
+        _currentHasReceipt != null;
+
+    if (hasLocalFilter) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final result = await _transactionService.getTransactionsPaginated(
+        _currentUserId!,
+        lastDocument: _lastDocument,
+        category: _currentCategory,
+      );
+
+      final newTransactions = result['transactions'] as List<TransactionModel>;
+      _transactions.addAll(newTransactions);
+      _lastDocument = result['lastDocument'] as DocumentSnapshot?;
+      _hasMore = result['hasMore'] as bool;
+      _isLoadingMore = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  void clearFilters() {
+    _currentCategory = null;
+    _currentSearchTitle = null;
+    _currentHasReceipt = null;
+    if (_currentUserId != null) {
+      loadTransactions(_currentUserId!, refresh: true);
+    }
+  }
+
+  Future<void> _loadAllTransactions(String userId) async {
+    try {
+      final result = await _transactionService.getTransactionsPaginated(userId, limit: 1000);
+      _allTransactions = result['transactions'] as List<TransactionModel>;
+    } catch (e) {
+      _allTransactions = [];
+    }
+  }
+
+  Future<void> _reloadTransactions() async {
+    if (_currentUserId != null) {
+      await _loadAllTransactions(_currentUserId!);
+      await loadTransactions(
+        _currentUserId!,
+        category: _currentCategory,
+        searchTitle: _currentSearchTitle,
+        hasReceipt: _currentHasReceipt,
+        refresh: true,
+      );
+    }
   }
 
   Future<bool> addTransaction(TransactionModel transaction, {XFile? receiptFile}) async {
@@ -49,9 +162,10 @@ class TransactionProvider extends ChangeNotifier {
       }
 
       final transactionWithReceipt = transaction.copyWith(receiptUrl: receiptUrl);
-
       await _transactionService.addTransaction(transactionWithReceipt);
+
       _isLoading = false;
+      await _reloadTransactions();
       notifyListeners();
       return true;
     } catch (e) {
@@ -71,18 +185,17 @@ class TransactionProvider extends ChangeNotifier {
       String? receiptUrl = transaction.receiptUrl;
 
       if (receiptFile != null) {
-        // Deletar recibo antigo se existir
         if (receiptUrl != null) {
           await _storageService.deleteReceipt(receiptUrl);
         }
-
         receiptUrl = await _storageService.uploadReceipt(receiptFile, transaction.userId);
       }
 
       final transactionWithReceipt = transaction.copyWith(receiptUrl: receiptUrl);
-
       await _transactionService.updateTransaction(transactionWithReceipt);
+
       _isLoading = false;
+      await _reloadTransactions();
       notifyListeners();
       return true;
     } catch (e) {
@@ -104,7 +217,9 @@ class TransactionProvider extends ChangeNotifier {
       }
 
       await _transactionService.deleteTransaction(transaction.id!);
+
       _isLoading = false;
+      await _reloadTransactions();
       notifyListeners();
       return true;
     } catch (e) {
@@ -113,22 +228,5 @@ class TransactionProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  List<TransactionModel> filterByCategory(String? category) {
-    if (category == null || category.isEmpty) {
-      return _transactions;
-    }
-    return _transactions.where((t) => t.category == category).toList();
-  }
-
-  List<TransactionModel> filterByPeriod(DateTime? start, DateTime? end) {
-    if (start == null || end == null) {
-      return _transactions;
-    }
-    return _transactions.where((t) {
-      return t.date.isAfter(start.subtract(const Duration(days: 1))) &&
-          t.date.isBefore(end.add(const Duration(days: 1)));
-    }).toList();
   }
 }
