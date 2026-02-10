@@ -9,7 +9,7 @@ class TransactionService {
     try {
       await _firestore.collection(_collection).add(transaction.toMap());
     } catch (e) {
-      throw Exception('Erro ao adicionar transação: ${e.toString()}');
+      throw Exception('Erro ao adicionar transação');
     }
   }
 
@@ -18,12 +18,9 @@ class TransactionService {
       if (transaction.id == null) {
         throw Exception('ID da transação não pode ser nulo');
       }
-      await _firestore
-          .collection(_collection)
-          .doc(transaction.id)
-          .update(transaction.toMap());
+      await _firestore.collection(_collection).doc(transaction.id).update(transaction.toMap());
     } catch (e) {
-      throw Exception('Erro ao atualizar transação: ${e.toString()}');
+      throw Exception('Erro ao atualizar transação');
     }
   }
 
@@ -31,70 +28,61 @@ class TransactionService {
     try {
       await _firestore.collection(_collection).doc(id).delete();
     } catch (e) {
-      throw Exception('Erro ao deletar transação: ${e.toString()}');
+      throw Exception('Erro ao deletar transação');
     }
   }
 
-  Stream<List<TransactionModel>> getTransactions(
-    String userId, {
-    String? category,
-    DateTime? startDate,
-    DateTime? endDate,
-    int limit = 20,
-  }) {
-    Query query = _firestore
-        .collection(_collection)
-        .where('userId', isEqualTo: userId)
-        .orderBy('date', descending: true)
-        .limit(limit);
-
-    if (category != null && category.isNotEmpty) {
-      query = query.where('category', isEqualTo: category);
-    }
-
-    if (startDate != null) {
-      query = query.where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
-    }
-
-    if (endDate != null) {
-      query = query.where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
-    }
-
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => TransactionModel.fromMap(
-                doc.data() as Map<String, dynamic>,
-                doc.id,
-              ))
-          .toList();
-    });
-  }
-
-  Future<List<TransactionModel>> getTransactionsPaginated(
+  Future<Map<String, dynamic>> getTransactionsPaginated(
     String userId, {
     DocumentSnapshot? lastDocument,
+    String? category,
+    String? searchTitle,
+    bool? hasReceipt,
     int limit = 20,
   }) async {
     try {
+      final hasLocalFilter = (searchTitle != null && searchTitle.isNotEmpty) || hasReceipt != null;
+      final effectiveLimit = hasLocalFilter ? 1000 : limit;
+
       Query query = _firestore
           .collection(_collection)
           .where('userId', isEqualTo: userId)
           .orderBy('date', descending: true)
-          .limit(limit);
+          .limit(effectiveLimit);
 
-      if (lastDocument != null) {
+      if (!hasLocalFilter && lastDocument != null) {
         query = query.startAfterDocument(lastDocument);
       }
 
+      if (category != null && category.isNotEmpty) {
+        query = query.where('category', isEqualTo: category);
+      }
+
       final snapshot = await query.get();
-      return snapshot.docs
-          .map((doc) => TransactionModel.fromMap(
-                doc.data() as Map<String, dynamic>,
-                doc.id,
-              ))
+
+      List<TransactionModel> transactions = snapshot.docs
+          .map((doc) => TransactionModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
+
+      if (searchTitle != null && searchTitle.isNotEmpty) {
+        transactions = transactions
+            .where((t) => t.title.toLowerCase().contains(searchTitle.toLowerCase()))
+            .toList();
+      }
+
+      if (hasReceipt != null) {
+        transactions = transactions
+            .where((t) => hasReceipt ? t.receiptUrl != null : t.receiptUrl == null)
+            .toList();
+      }
+
+      return {
+        'transactions': transactions,
+        'lastDocument': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        'hasMore': !hasLocalFilter && snapshot.docs.length >= limit,
+      };
     } catch (e) {
-      throw Exception('Erro ao carregar transações: ${e.toString()}');
+      throw Exception('Erro ao carregar transações');
     }
   }
 }
