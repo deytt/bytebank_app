@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_input.dart';
@@ -31,18 +32,14 @@ class _LoginScreenState extends State<LoginScreen> {
     bool success;
 
     if (_isSignUp) {
-      success = await authProvider.signUp(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      success = await authProvider.signUp(_emailController.text.trim(), _passwordController.text);
     } else {
-      success = await authProvider.signIn(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      success = await authProvider.signIn(_emailController.text.trim(), _passwordController.text);
     }
 
-    if (!success && mounted) {
+    if (!mounted) return;
+
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Erro ao autenticar'),
@@ -66,11 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.account_balance_wallet,
-                    size: 80,
-                    color: AppTheme.primary,
-                  ),
+                  SvgPicture.asset('assets/images/favicon64px.svg', width: 80, height: 80),
                   const SizedBox(height: 24),
                   const Text(
                     'Bytebank App',
@@ -83,10 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Gerenciamento financeiro simplificado',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
                   ),
                   const SizedBox(height: 48),
                   CustomInput(
@@ -143,9 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     },
                     child: Text(
-                      _isSignUp
-                          ? 'Já tem uma conta? Entrar'
-                          : 'Não tem uma conta? Criar',
+                      _isSignUp ? 'Já tem uma conta? Entrar' : 'Não tem uma conta? Criar',
                       style: const TextStyle(color: AppTheme.primaryLight),
                     ),
                   ),
