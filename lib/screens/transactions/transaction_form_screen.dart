@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
@@ -43,7 +44,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     super.initState();
     if (widget.transaction != null) {
       _titleController.text = widget.transaction!.title;
-      _valueController.text = widget.transaction!.value.toString();
+      _valueController.text = Formatters.formatCurrencySimple(widget.transaction!.value);
       _type = widget.transaction!.type;
       _category = widget.transaction!.category;
       _date = widget.transaction!.date;
@@ -95,7 +96,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       id: widget.transaction?.id,
       userId: authProvider.user!.id,
       title: _titleController.text.trim(),
-      value: double.parse(_valueController.text),
+      value: Formatters.parseCurrency(_valueController.text),
       category: _category,
       type: _type,
       date: _date,
@@ -109,16 +110,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       success = await transactionProvider.updateTransaction(transaction, receiptFile: _receiptFile);
     }
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (success) {
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
-            widget.transaction == null ? 'Transação adicionada' : 'Transação atualizada',
+            widget.transaction == null
+                ? 'Transação adicionada com sucesso'
+                : 'Transação atualizada com sucesso',
           ),
+          duration: const Duration(seconds: 2),
         ),
       );
-    } else if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(transactionProvider.errorMessage ?? 'Erro ao salvar transação'),
@@ -157,12 +164,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 label: 'Valor',
                 controller: _valueController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [CurrencyInputFormatter()],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Valor é obrigatório';
                   }
-                  final numValue = double.tryParse(value);
-                  if (numValue == null || numValue <= 0) {
+                  final numValue = Formatters.parseCurrency(value);
+                  if (numValue <= 0) {
                     return 'Valor deve ser maior que zero';
                   }
                   return null;
@@ -269,7 +277,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 }
 
-// Widget helper para preview de recibo que funciona em todas as plataformas
 class _ReceiptPreview extends StatelessWidget {
   final XFile receiptFile;
   final VoidCallback onRemove;
