@@ -38,6 +38,7 @@ class TransactionService {
     String? category,
     String? searchTitle,
     bool? hasReceipt,
+    int? dateRangeDays,
     int limit = 20,
   }) async {
     try {
@@ -56,6 +57,11 @@ class TransactionService {
 
       if (category != null && category.isNotEmpty) {
         query = query.where('category', isEqualTo: category);
+      }
+
+      if (dateRangeDays != null) {
+        final startDate = DateTime.now().subtract(Duration(days: dateRangeDays));
+        query = query.where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
       }
 
       final snapshot = await query.get();
