@@ -215,7 +215,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               const SizedBox(height: 16),
               ListTile(
                 title: const Text('Data'),
-                subtitle: Text('${_date.day}/${_date.month}/${_date.year}'),
+                subtitle: Text(Formatters.formatDate(_date)),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: _selectDate,
                 contentPadding: EdgeInsets.zero,
