@@ -11,7 +11,7 @@ O Bytebank App é uma aplicação acadêmica para controle financeiro pessoal, p
 - **Autenticação**: Login e cadastro com email/senha
 - **Transações**: Criar, editar e excluir transações com upload de recibos
 - **Dashboard**: Visualização de saldo, receitas, despesas e gráfico
-- **Filtros**: Buscar por título, categoria ou presença de recibo
+- **Filtros**: Buscar por título, categoria, presença de recibo e período (15, 30 ou 90 dias)
 - **Paginação**: Carregamento progressivo de transações
 
 ## 🛠️ Tecnologias
@@ -22,6 +22,23 @@ O Bytebank App é uma aplicação acadêmica para controle financeiro pessoal, p
 - **Firebase Storage** - Armazenamento de recibos
 - **Provider** - Gerenciamento de estado
 - **FL Chart** - Gráficos
+
+## 📋 Pré-requisitos
+
+Antes de executar o projeto, certifique-se de ter o Flutter instalado e configurado em sua máquina.
+
+### Instalação do Flutter
+
+Para instalar o Flutter, siga o guia oficial para seu sistema operacional:
+
+**📖 Documentação oficial:** https://docs.flutter.dev/get-started/install
+
+**Verificar instalação:**
+```bash
+flutter doctor
+```
+
+Este comando verifica se todas as dependências necessárias estão instaladas (Flutter SDK, Android Studio, Xcode, etc.).
 
 ## 📦 Instalação
 
