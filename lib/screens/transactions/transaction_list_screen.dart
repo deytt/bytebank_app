@@ -19,6 +19,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
 
   String? _selectedCategory;
   bool? _hasReceipt;
+  int? _selectedDateRange;
 
   final List<String> _categories = [
     'Alimentação',
@@ -78,6 +79,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         category: _selectedCategory,
         searchTitle: searchTitle,
         hasReceipt: _hasReceipt,
+        dateRangeDays: _selectedDateRange,
         refresh: true,
       );
     }
@@ -87,13 +89,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     setState(() {
       _selectedCategory = null;
       _hasReceipt = null;
+      _selectedDateRange = null;
       _searchController.clear();
     });
     context.read<TransactionProvider>().clearFilters();
   }
 
   bool get _hasActiveFilters {
-    return _selectedCategory != null || _hasReceipt != null || _searchController.text.isNotEmpty;
+    return _selectedCategory != null ||
+        _hasReceipt != null ||
+        _selectedDateRange != null ||
+        _searchController.text.isNotEmpty;
   }
 
   @override
@@ -180,6 +186,20 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                           onDeleted: () {
                             setState(() {
                               _hasReceipt = null;
+                            });
+                            _applyFilters();
+                          },
+                        ),
+                      ),
+                    if (_selectedDateRange != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Chip(
+                          label: Text('Últimos $_selectedDateRange dias'),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedDateRange = null;
                             });
                             _applyFilters();
                           },
@@ -326,6 +346,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   void _showFilterDialog() {
     String? tempCategory = _selectedCategory;
     bool? tempHasReceipt = _hasReceipt;
+    int? tempDateRange = _selectedDateRange;
 
     showDialog(
       context: context,
@@ -404,6 +425,51 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Text('Período', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Todos'),
+                      selected: tempDateRange == null,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempDateRange = null;
+                        });
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('Últimos 15 dias'),
+                      selected: tempDateRange == 15,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempDateRange = selected ? 15 : null;
+                        });
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('Últimos 30 dias'),
+                      selected: tempDateRange == 30,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempDateRange = selected ? 30 : null;
+                        });
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('Últimos 90 dias'),
+                      selected: tempDateRange == 90,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempDateRange = selected ? 90 : null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -415,6 +481,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               setState(() {
                 _selectedCategory = tempCategory;
                 _hasReceipt = tempHasReceipt;
+                _selectedDateRange = tempDateRange;
               });
               Navigator.pop(context);
               _applyFilters();
