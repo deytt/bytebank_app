@@ -129,7 +129,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(transactionProvider.errorMessage ?? 'Erro ao salvar transação'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -177,7 +177,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Tipo', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+              Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
               const SizedBox(height: 8),
               SegmentedButton<TransactionType>(
                 segments: const [
@@ -221,10 +221,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 contentPadding: EdgeInsets.zero,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Recibo (opcional)',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
-              ),
+              Text('Recibo (opcional)', style: Theme.of(context).textTheme.labelMedium),
               const SizedBox(height: 8),
               if (_receiptFile != null)
                 _ReceiptPreview(
