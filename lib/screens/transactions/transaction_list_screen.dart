@@ -309,14 +309,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
                                     child: const Text(
-                                      'Excluir',
-                                      style: TextStyle(color: AppTheme.error),
+                                      'Cancelar',
+                                      style: TextStyle(color: AppTheme.white),
                                     ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.error,
+                                    ),
+                                    child: const Text('Excluir'),
                                   ),
                                 ],
                               ),
@@ -531,7 +534,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
+          ),
           ElevatedButton(
             onPressed: () {
               setState(() {
