@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/transaction_model.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/transaction_card.dart';
@@ -20,6 +21,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   String? _selectedCategory;
   bool? _hasReceipt;
   int? _selectedDateRange;
+  TransactionType? _selectedType;
 
   final List<String> _categories = [
     'Alimentação',
@@ -80,6 +82,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         searchTitle: searchTitle,
         hasReceipt: _hasReceipt,
         dateRangeDays: _selectedDateRange,
+        type: _selectedType,
         refresh: true,
       );
     }
@@ -90,6 +93,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       _selectedCategory = null;
       _hasReceipt = null;
       _selectedDateRange = null;
+      _selectedType = null;
       _searchController.clear();
     });
     context.read<TransactionProvider>().clearFilters();
@@ -99,6 +103,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     return _selectedCategory != null ||
         _hasReceipt != null ||
         _selectedDateRange != null ||
+        _selectedType != null ||
         _searchController.text.isNotEmpty;
   }
 
@@ -200,6 +205,22 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                           onDeleted: () {
                             setState(() {
                               _selectedDateRange = null;
+                            });
+                            _applyFilters();
+                          },
+                        ),
+                      ),
+                    if (_selectedType != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Chip(
+                          label: Text(
+                            _selectedType == TransactionType.income ? 'Receita' : 'Despesa',
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedType = null;
                             });
                             _applyFilters();
                           },
@@ -347,6 +368,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     String? tempCategory = _selectedCategory;
     bool? tempHasReceipt = _hasReceipt;
     int? tempDateRange = _selectedDateRange;
+    TransactionType? tempType = _selectedType;
 
     showDialog(
       context: context,
@@ -470,6 +492,42 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Text('Tipo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Todos'),
+                      selected: tempType == null,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempType = null;
+                        });
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('Receita'),
+                      selected: tempType == TransactionType.income,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempType = selected ? TransactionType.income : null;
+                        });
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('Despesa'),
+                      selected: tempType == TransactionType.expense,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempType = selected ? TransactionType.expense : null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -482,6 +540,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 _selectedCategory = tempCategory;
                 _hasReceipt = tempHasReceipt;
                 _selectedDateRange = tempDateRange;
+                _selectedType = tempType;
               });
               Navigator.pop(context);
               _applyFilters();

@@ -21,6 +21,7 @@ class TransactionProvider extends ChangeNotifier {
   String? _currentSearchTitle;
   bool? _currentHasReceipt;
   int? _currentDateRangeDays;
+  TransactionType? _currentType;
 
   List<TransactionModel> get transactions => _transactions;
   bool get isLoading => _isLoading;
@@ -48,6 +49,7 @@ class TransactionProvider extends ChangeNotifier {
     String? searchTitle,
     bool? hasReceipt,
     int? dateRangeDays,
+    TransactionType? type,
     bool refresh = false,
   }) async {
     if (refresh) {
@@ -65,6 +67,7 @@ class TransactionProvider extends ChangeNotifier {
     _currentSearchTitle = searchTitle;
     _currentHasReceipt = hasReceipt;
     _currentDateRangeDays = dateRangeDays;
+    _currentType = type;
     notifyListeners();
 
     try {
@@ -74,6 +77,7 @@ class TransactionProvider extends ChangeNotifier {
         searchTitle: searchTitle,
         hasReceipt: hasReceipt,
         dateRangeDays: dateRangeDays,
+        type: type,
       );
 
       _transactions = result['transactions'] as List<TransactionModel>;
@@ -128,6 +132,7 @@ class TransactionProvider extends ChangeNotifier {
     _currentSearchTitle = null;
     _currentHasReceipt = null;
     _currentDateRangeDays = null;
+    _currentType = null;
     if (_currentUserId != null) {
       loadTransactions(_currentUserId!, refresh: true);
     }
@@ -151,6 +156,7 @@ class TransactionProvider extends ChangeNotifier {
         searchTitle: _currentSearchTitle,
         hasReceipt: _currentHasReceipt,
         dateRangeDays: _currentDateRangeDays,
+        type: _currentType,
         refresh: true,
       );
     }
