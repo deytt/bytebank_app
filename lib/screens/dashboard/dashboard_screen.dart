@@ -55,7 +55,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         title: const Text('Confirmar logout'),
         content: const Text('Deseja realmente sair da sua conta?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
