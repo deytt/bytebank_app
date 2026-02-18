@@ -146,7 +146,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   helperText: _searchController.text.isNotEmpty && _searchController.text.length < 3
                       ? 'Digite pelo menos 3 caracteres'
                       : null,
-                  helperStyle: const TextStyle(color: Colors.orange),
                 ),
                 onChanged: (value) {
                   setState(() {});
@@ -251,15 +250,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               child: transactionProvider.isLoading && transactions.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : transactions.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.receipt_long, size: 64, color: AppTheme.textSecondary),
-                          SizedBox(height: 16),
+                          const Icon(Icons.receipt_long, size: 64, color: AppTheme.textSecondary),
+                          const SizedBox(height: 16),
                           Text(
                             'Nenhuma transação encontrada',
-                            style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
                           ),
                         ],
                       ),
@@ -275,12 +276,12 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                               child: Center(child: CircularProgressIndicator()),
                             );
                           } else if (!transactionProvider.hasMore) {
-                            return const Padding(
-                              padding: EdgeInsets.all(16),
+                            return Padding(
+                              padding: const EdgeInsets.all(16),
                               child: Center(
                                 child: Text(
                                   'Todas as transações foram carregadas',
-                                  style: TextStyle(color: AppTheme.textSecondary),
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                             );
@@ -314,7 +315,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                                     onPressed: () => Navigator.pop(context, true),
                                     child: const Text(
                                       'Excluir',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: AppTheme.error),
                                     ),
                                   ),
                                 ],
@@ -341,7 +342,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                                       transactionProvider.errorMessage ??
                                           'Erro ao excluir transação',
                                     ),
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: AppTheme.error,
                                   ),
                                 );
                               }
@@ -380,10 +381,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Categoria',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+                Text('Categoria', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -412,7 +410,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Recibo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Recibo', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -448,7 +446,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Período', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Período', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -493,7 +491,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Tipo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Tipo', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
