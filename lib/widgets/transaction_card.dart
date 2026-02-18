@@ -14,7 +14,7 @@ class TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
-    final color = isIncome ? Colors.green : Colors.red;
+    final color = isIncome ? AppTheme.success : AppTheme.error;
     final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
 
     return Card(
@@ -39,28 +39,21 @@ class TransactionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      transaction.title,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text(transaction.title, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Flexible(
                           child: Text(
                             transaction.category,
-                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                            style: Theme.of(context).textTheme.bodySmall,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('dd/MM/yyyy').format(transaction.date),
-                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),
@@ -72,7 +65,9 @@ class TransactionCard extends StatelessWidget {
                 children: [
                   Text(
                     '${isIncome ? '+' : '-'} ${Formatters.formatCurrency(transaction.value)}',
-                    style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.bold),
                   ),
                   if (transaction.receiptUrl != null)
                     const Icon(Icons.receipt, color: AppTheme.textSecondary, size: 16),
@@ -81,7 +76,7 @@ class TransactionCard extends StatelessWidget {
               if (onDelete != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, color: AppTheme.error),
                   onPressed: onDelete,
                 ),
               ],
