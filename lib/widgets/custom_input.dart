@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../core/theme/app_theme.dart';
 
 class CustomInput extends StatelessWidget {
   final String label;
@@ -33,7 +32,7 @@ class CustomInput extends StatelessWidget {
       validator: validator,
       maxLines: maxLines,
       inputFormatters: inputFormatters,
-      style: const TextStyle(color: AppTheme.textPrimary),
+      style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(labelText: label, suffixIcon: suffixIcon),
     );
   }
