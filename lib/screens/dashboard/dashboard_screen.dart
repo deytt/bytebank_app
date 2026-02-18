@@ -58,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Sair'),
           ),
         ],
@@ -113,17 +113,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Text(
-              'Saldo Atual',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
-            ),
+            Text('Saldo Atual', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: 8),
             Text(
               Formatters.formatCurrency(provider.balance),
-              style: TextStyle(
-                color: provider.balance >= 0 ? Colors.green : Colors.red,
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                color: provider.balance >= 0 ? AppTheme.success : AppTheme.error,
               ),
             ),
             const SizedBox(height: 24),
@@ -133,13 +128,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 _buildBalanceItem(
                   'Receitas',
                   provider.totalIncome,
-                  Colors.green,
+                  AppTheme.success,
                   Icons.arrow_upward,
                 ),
                 _buildBalanceItem(
                   'Despesas',
                   provider.totalExpense,
-                  Colors.red,
+                  AppTheme.error,
                   Icons.arrow_downward,
                 ),
               ],
@@ -155,11 +150,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       children: [
         Icon(icon, color: color, size: 24),
         const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 4),
         Text(
           Formatters.formatCurrency(value),
-          style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: color),
         ),
       ],
     );
@@ -170,15 +165,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final expense = provider.totalExpense;
 
     if (income == 0 && expense == 0) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Center(
             child: Column(
               children: [
-                Icon(Icons.pie_chart, size: 64, color: AppTheme.textSecondary),
-                SizedBox(height: 16),
-                Text('Nenhuma transação ainda', style: TextStyle(color: AppTheme.textSecondary)),
+                const Icon(Icons.pie_chart, size: 64, color: AppTheme.textSecondary),
+                const SizedBox(height: 16),
+                Text('Nenhuma transação ainda', style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
@@ -192,14 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Distribuição',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Distribuição', style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
@@ -209,23 +197,23 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     PieChartSectionData(
                       value: income,
                       title: 'Receitas',
-                      color: Colors.green,
+                      color: AppTheme.success,
                       radius: 60,
                       titleStyle: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppTheme.white,
                       ),
                     ),
                     PieChartSectionData(
                       value: expense,
                       title: 'Despesas',
-                      color: Colors.red,
+                      color: AppTheme.error,
                       radius: 60,
                       titleStyle: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppTheme.white,
                       ),
                     ),
                   ],
@@ -244,10 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Ações Rápidas',
-          style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        Text('Ações Rápidas', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -284,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
