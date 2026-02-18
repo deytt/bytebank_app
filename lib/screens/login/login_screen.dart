@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Erro ao autenticar'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -65,18 +65,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   SvgPicture.asset('assets/images/favicon64px.svg', width: 80, height: 80),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Bytebank App',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
+                  Text('Bytebank App', style: Theme.of(context).textTheme.displayMedium),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Gerenciamento financeiro simplificado',
-                    style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
                   ),
                   const SizedBox(height: 48),
                   CustomInput(
