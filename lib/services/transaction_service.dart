@@ -39,10 +39,12 @@ class TransactionService {
     String? searchTitle,
     bool? hasReceipt,
     int? dateRangeDays,
+    TransactionType? type,
     int limit = 20,
   }) async {
     try {
-      final hasLocalFilter = (searchTitle != null && searchTitle.isNotEmpty) || hasReceipt != null;
+      final hasLocalFilter =
+          (searchTitle != null && searchTitle.isNotEmpty) || hasReceipt != null || type != null;
       final effectiveLimit = hasLocalFilter ? 1000 : limit;
 
       Query query = _firestore
@@ -80,6 +82,10 @@ class TransactionService {
         transactions = transactions
             .where((t) => hasReceipt ? t.receiptUrl != null : t.receiptUrl == null)
             .toList();
+      }
+
+      if (type != null) {
+        transactions = transactions.where((t) => t.type == type).toList();
       }
 
       return {
