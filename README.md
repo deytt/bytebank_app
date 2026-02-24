@@ -20,6 +20,7 @@ O Bytebank App é uma aplicação acadêmica para controle financeiro pessoal, p
 - **Firebase Auth** - Autenticação
 - **Cloud Firestore** - Banco de dados
 - **Firebase Storage** - Armazenamento de recibos
+- **App Distribution** - Distribuição de versões
 - **Provider** - Gerenciamento de estado
 - **FL Chart** - Gráficos
 
