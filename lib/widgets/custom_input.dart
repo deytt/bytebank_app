@@ -8,6 +8,7 @@ class CustomInput extends StatelessWidget {
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
   final int maxLines;
+  final int? maxLength;
   final Widget? suffixIcon;
   final List<TextInputFormatter>? inputFormatters;
 
@@ -19,6 +20,7 @@ class CustomInput extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.validator,
     this.maxLines = 1,
+    this.maxLength,
     this.suffixIcon,
     this.inputFormatters,
   });
@@ -31,6 +33,7 @@ class CustomInput extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       maxLines: maxLines,
+      maxLength: maxLength,
       inputFormatters: inputFormatters,
       style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(labelText: label, suffixIcon: suffixIcon),

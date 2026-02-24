@@ -26,6 +26,10 @@ class Formatters {
 }
 
 class CurrencyInputFormatter extends TextInputFormatter {
+  final int maxDigits;
+
+  CurrencyInputFormatter({this.maxDigits = 8});
+
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.isEmpty) {
@@ -37,6 +41,10 @@ class CurrencyInputFormatter extends TextInputFormatter {
 
     if (digitsOnly.isEmpty) {
       return const TextEditingValue(text: '');
+    }
+
+    if (digitsOnly.length > maxDigits) {
+      digitsOnly = digitsOnly.substring(0, maxDigits);
     }
 
     // Converte para double (centavos)

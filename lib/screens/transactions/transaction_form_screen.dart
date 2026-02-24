@@ -152,6 +152,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               CustomInput(
                 label: 'Título',
                 controller: _titleController,
+                maxLength: 50,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Título é obrigatório';
@@ -164,7 +165,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 label: 'Valor',
                 controller: _valueController,
                 keyboardType: TextInputType.number,
-                inputFormatters: [CurrencyInputFormatter()],
+                inputFormatters: [CurrencyInputFormatter(maxDigits: 8)],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Valor é obrigatório';
