@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'firebase_options.dart';
 import 'app.dart';
-import 'providers/auth_provider.dart';
-import 'providers/transaction_provider.dart';
+import 'core/utils/encryption_service.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/transactions/presentation/bloc/transaction_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await firebase_auth.FirebaseAuth.instance.signOut();
+  await EncryptionService().initialize();
 
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        BlocProvider(
+          create: (_) => AuthBloc()..add(const AuthStarted()),
+        ),
+        BlocProvider(
+          create: (_) => TransactionBloc(),
+        ),
       ],
       child: const App(),
     ),
