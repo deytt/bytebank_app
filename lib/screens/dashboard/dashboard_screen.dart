@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/transaction_provider.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/transactions/presentation/bloc/transaction_bloc.dart';
+import '../../models/transaction_model.dart';
+import '../../models/user_model.dart';
 import '../transactions/transaction_list_screen.dart';
+
+enum _ChartPeriod { total, last12Months, last3Months }
+
+enum _ChartType { line, bar }
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,41 +20,98 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
+class _DashboardScreenState extends State<DashboardScreen>
+    with TickerProviderStateMixin {
+  _ChartPeriod _selectedPeriod = _ChartPeriod.last12Months;
+  _ChartType _selectedChartType = _ChartType.line;
+
+  late AnimationController _headerController;
+  late AnimationController _balanceController;
+  late AnimationController _chartController;
+  late AnimationController _actionsController;
+
+  late Animation<double> _headerFade;
+  late Animation<Offset> _headerSlide;
+  late Animation<double> _balanceFade;
+  late Animation<Offset> _balanceSlide;
+  late Animation<double> _chartFade;
+  late Animation<Offset> _chartSlide;
+  late Animation<double> _actionsFade;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _setupAnimations();
+    _runAnimationSequence();
+  }
+
+  void _setupAnimations() {
+    _headerController = AnimationController(
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeIn));
-    _animationController.forward();
+    _balanceController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _chartController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _actionsController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = context.read<AuthProvider>();
-      final transactionProvider = context.read<TransactionProvider>();
-      if (authProvider.user != null) {
-        transactionProvider.loadTransactions(authProvider.user!.id);
-      }
-    });
+    _headerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _headerController, curve: Curves.easeOut),
+    );
+    _headerSlide = Tween<Offset>(
+      begin: const Offset(0.0, -0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic));
+
+    _balanceFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _balanceController, curve: Curves.easeOut),
+    );
+    _balanceSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _balanceController, curve: Curves.easeOutCubic));
+
+    _chartFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _chartController, curve: Curves.easeOut),
+    );
+    _chartSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _chartController, curve: Curves.easeOutCubic));
+
+    _actionsFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _actionsController, curve: Curves.easeOut),
+    );
+  }
+
+  Future<void> _runAnimationSequence() async {
+    await _headerController.forward();
+    await Future.delayed(const Duration(milliseconds: 100));
+    await _balanceController.forward();
+    await Future.delayed(const Duration(milliseconds: 100));
+    _chartController.forward();
+    await Future.delayed(const Duration(milliseconds: 200));
+    _actionsController.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _headerController.dispose();
+    _balanceController.dispose();
+    _chartController.dispose();
+    _actionsController.dispose();
     super.dispose();
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
-    final authProvider = context.read<AuthProvider>();
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -67,50 +130,603 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ],
       ),
     );
-
-    if (confirm == true) {
-      authProvider.signOut();
+    if (confirm == true && context.mounted) {
+      context.read<AuthBloc>().add(const AuthSignOutRequested());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final transactionProvider = context.watch<TransactionProvider>();
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final user = authState is AuthAuthenticated ? authState.user : null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: () => _confirmLogout(context)),
-        ],
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+        return BlocBuilder<TransactionBloc, TransactionState>(
+          builder: (context, txState) {
+            final loaded = txState is TransactionLoaded
+                ? txState
+                : txState is TransactionActionSuccess
+                    ? txState.data
+                    : null;
+
+            return Scaffold(
+              backgroundColor: AppTheme.background,
+              appBar: _buildAppBar(context, user),
+              body: RefreshIndicator(
+                onRefresh: () async {
+                  if (user != null) {
+                    context.read<TransactionBloc>().add(
+                          LoadTransactions(userId: user.id, refresh: true),
+                        );
+                  }
+                },
+                child: loaded == null && txState is TransactionLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildBody(context, loaded),
+              ),
+              floatingActionButton: FadeTransition(
+                opacity: _actionsFade,
+                child: FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TransactionListScreen()),
+                    );
+                  },
+                  backgroundColor: AppTheme.primary,
+                  icon: const Icon(Icons.list),
+                  label: const Text('Transações'),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, UserModel? user) {
+    return AppBar(
+      title: SlideTransition(
+        position: _headerSlide,
+        child: FadeTransition(
+          opacity: _headerFade,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildBalanceCard(transactionProvider),
-              const SizedBox(height: 24),
-              _buildChart(transactionProvider),
-              const SizedBox(height: 24),
-              _buildQuickActions(context),
+              Text(
+                'Olá, ${user?.firstName ?? 'Usuário'} 👋',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              Text(
+                'Dashboard',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const TransactionListScreen()));
-        },
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.list),
+      actions: [
+        if (user != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => _showUserModal(context, user),
+              child: Hero(
+                tag: 'user_avatar',
+                child: _UserAvatar(user: user),
+              ),
+            ),
+          ),
+        IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () => _confirmLogout(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context, TransactionLoaded? loaded) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SlideTransition(
+            position: _balanceSlide,
+            child: FadeTransition(
+              opacity: _balanceFade,
+              child: _BalanceCard(loaded: loaded),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SlideTransition(
+            position: _chartSlide,
+            child: FadeTransition(
+              opacity: _chartFade,
+              child: _buildChartCard(loaded),
+            ),
+          ),
+          const SizedBox(height: 80),
+        ],
       ),
     );
   }
 
-  Widget _buildBalanceCard(TransactionProvider provider) {
+  Widget _buildChartCard(TransactionLoaded? loaded) {
+    final transactions = loaded?.allTransactions ?? [];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Evolução do Saldo',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 16),
+            _buildChartTypeToggle(),
+            const SizedBox(height: 12),
+            _buildPeriodSelector(),
+            const SizedBox(height: 20),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.1, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: transactions.isEmpty
+                  ? _buildEmptyChart()
+                  : SizedBox(
+                      key: ValueKey('${_selectedChartType.name}_${_selectedPeriod.name}'),
+                      height: 220,
+                      child: _selectedChartType == _ChartType.line
+                          ? _buildLineChart(transactions)
+                          : _buildBarChart(transactions),
+                    ),
+            ),
+            const SizedBox(height: 12),
+            _buildChartLegend(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartTypeToggle() {
+    return Row(
+      children: [
+        Expanded(
+          child: SegmentedButton<_ChartType>(
+            segments: const [
+              ButtonSegment(
+                value: _ChartType.line,
+                label: Text('Linha'),
+                icon: Icon(Icons.show_chart, size: 16),
+              ),
+              ButtonSegment(
+                value: _ChartType.bar,
+                label: Text('Barras'),
+                icon: Icon(Icons.bar_chart, size: 16),
+              ),
+            ],
+            selected: {_selectedChartType},
+            onSelectionChanged: (value) {
+              setState(() {
+                _selectedChartType = value.first;
+              });
+            },
+            style: ButtonStyle(
+              textStyle: WidgetStateProperty.all(
+                const TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    return Row(
+      children: [
+        Expanded(
+          child: SegmentedButton<_ChartPeriod>(
+            segments: const [
+              ButtonSegment(
+                value: _ChartPeriod.last3Months,
+                label: Text('3 meses'),
+              ),
+              ButtonSegment(
+                value: _ChartPeriod.last12Months,
+                label: Text('12 meses'),
+              ),
+              ButtonSegment(
+                value: _ChartPeriod.total,
+                label: Text('Total'),
+              ),
+            ],
+            selected: {_selectedPeriod},
+            onSelectionChanged: (value) {
+              setState(() {
+                _selectedPeriod = value.first;
+              });
+            },
+            style: ButtonStyle(
+              textStyle: WidgetStateProperty.all(
+                const TextStyle(fontSize: 11),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyChart() {
+    return const SizedBox(
+      height: 220,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.show_chart, size: 48, color: AppTheme.textSecondary),
+            SizedBox(height: 8),
+            Text(
+              'Nenhuma transação ainda',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<_MonthData> _getChartData(List<TransactionModel> transactions) {
+    final now = DateTime.now();
+    DateTime startDate;
+
+    switch (_selectedPeriod) {
+      case _ChartPeriod.last3Months:
+        startDate = DateTime(now.year, now.month - 2, 1);
+        break;
+      case _ChartPeriod.last12Months:
+        startDate = DateTime(now.year, now.month - 11, 1);
+        break;
+      case _ChartPeriod.total:
+        if (transactions.isEmpty) return [];
+        final oldest = transactions.reduce(
+          (a, b) => a.date.isBefore(b.date) ? a : b,
+        );
+        startDate = DateTime(oldest.date.year, oldest.date.month, 1);
+        break;
+    }
+
+    final Map<String, _MonthData> monthMap = {};
+
+    DateTime current = startDate;
+    final end = DateTime(now.year, now.month + 1, 0);
+
+    while (current.isBefore(end) || current.month == end.month) {
+      final key = '${current.year}-${current.month.toString().padLeft(2, '0')}';
+      monthMap[key] = _MonthData(
+        year: current.year,
+        month: current.month,
+        income: 0,
+        expense: 0,
+      );
+      current = DateTime(current.year, current.month + 1, 1);
+    }
+
+    for (final t in transactions) {
+      if (t.date.isBefore(startDate)) continue;
+      final key = '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}';
+      if (!monthMap.containsKey(key)) continue;
+      if (t.type == TransactionType.income) {
+        monthMap[key] = monthMap[key]!.copyWith(
+          income: monthMap[key]!.income + t.value,
+        );
+      } else {
+        monthMap[key] = monthMap[key]!.copyWith(
+          expense: monthMap[key]!.expense + t.value,
+        );
+      }
+    }
+
+    final sorted = monthMap.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    double cumulativeBalance = 0;
+    final result = <_MonthData>[];
+
+    for (final entry in sorted) {
+      cumulativeBalance += entry.value.income - entry.value.expense;
+      result.add(entry.value.copyWith(balance: cumulativeBalance));
+    }
+
+    return result;
+  }
+
+  Widget _buildLineChart(List<TransactionModel> transactions) {
+    final data = _getChartData(transactions);
+    if (data.isEmpty) return _buildEmptyChart();
+
+    final spots = data.asMap().entries.map((e) {
+      return FlSpot(e.key.toDouble(), e.value.balance);
+    }).toList();
+
+    final minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
+    final maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    final padding = (maxY - minY) * 0.15;
+
+    return LineChart(
+      LineChartData(
+        minY: minY - padding,
+        maxY: maxY + padding,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: AppTheme.surface.withValues(alpha: 0.5),
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 52,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  _formatChartValue(value),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 9,
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              interval: data.length > 6 ? (data.length / 6).ceilToDouble() : 1,
+              getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx < 0 || idx >= data.length) return const SizedBox.shrink();
+                final d = data[idx];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    _monthLabel(d.month),
+                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 9),
+                  ),
+                );
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            curveSmoothness: 0.3,
+            color: AppTheme.primaryLight,
+            barWidth: 2.5,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: spots.length <= 6,
+              getDotPainter: (spot, xPercentage, bar, index) => FlDotCirclePainter(
+                radius: 4,
+                color: AppTheme.primaryLight,
+                strokeWidth: 2,
+                strokeColor: AppTheme.background,
+              ),
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppTheme.primaryLight.withValues(alpha: 0.3),
+                  AppTheme.primaryLight.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (spots) {
+              return spots.map((spot) {
+                final idx = spot.x.toInt();
+                if (idx < 0 || idx >= data.length) return null;
+                final d = data[idx];
+                return LineTooltipItem(
+                  '${_monthLabel(d.month)}/${d.year}\n${Formatters.formatCurrency(spot.y)}',
+                  const TextStyle(
+                    color: AppTheme.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+      ),
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  Widget _buildBarChart(List<TransactionModel> transactions) {
+    final data = _getChartData(transactions);
+    if (data.isEmpty) return _buildEmptyChart();
+
+    final maxY = data
+        .map((d) => d.income > d.expense ? d.income : d.expense)
+        .reduce((a, b) => a > b ? a : b);
+
+    return BarChart(
+      BarChartData(
+        maxY: maxY * 1.2,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: AppTheme.surface.withValues(alpha: 0.5),
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 52,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  _formatChartValue(value),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 9,
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx < 0 || idx >= data.length) return const SizedBox.shrink();
+                final d = data[idx];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    _monthLabel(d.month),
+                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 9),
+                  ),
+                );
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        barGroups: data.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final d = entry.value;
+          return BarChartGroupData(
+            x: idx,
+            barsSpace: 4,
+            barRods: [
+              BarChartRodData(
+                toY: d.income,
+                color: AppTheme.success.withValues(alpha: 0.85),
+                width: 10,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+              BarChartRodData(
+                toY: d.expense,
+                color: AppTheme.error.withValues(alpha: 0.85),
+                width: 10,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+            ],
+          );
+        }).toList(),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final d = data[group.x];
+              final label = rodIndex == 0 ? 'Receita' : 'Despesa';
+              return BarTooltipItem(
+                '${_monthLabel(d.month)}/${d.year}\n$label: ${Formatters.formatCurrency(rod.toY)}',
+                const TextStyle(
+                  color: AppTheme.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  Widget _buildChartLegend() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (_selectedChartType == _ChartType.bar) ...[
+          _LegendItem(color: AppTheme.success, label: 'Receitas'),
+          const SizedBox(width: 16),
+          _LegendItem(color: AppTheme.error, label: 'Despesas'),
+        ] else ...[
+          _LegendItem(color: AppTheme.primaryLight, label: 'Saldo acumulado'),
+        ],
+      ],
+    );
+  }
+
+  String _formatChartValue(double value) {
+    if (value.abs() >= 1000) {
+      return 'R\$ ${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return 'R\$ ${value.toStringAsFixed(0)}';
+  }
+
+  String _monthLabel(int month) {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return months[month - 1];
+  }
+
+  void _showUserModal(BuildContext context, UserModel user) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: _UserAccountModal(user: user),
+      ),
+    );
+  }
+}
+
+class _BalanceCard extends StatelessWidget {
+  final TransactionLoaded? loaded;
+
+  const _BalanceCard({required this.loaded});
+
+  @override
+  Widget build(BuildContext context) {
+    final balance = loaded?.balance ?? 0.0;
+    final income = loaded?.totalIncome ?? 0.0;
+    final expense = loaded?.totalExpense ?? 0.0;
+    final isPositive = balance >= 0;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -118,27 +734,33 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           children: [
             Text('Saldo Atual', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: 8),
-            Text(
-              Formatters.formatCurrency(provider.balance),
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: provider.balance >= 0 ? AppTheme.success : AppTheme.error,
-              ),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: Theme.of(context).textTheme.displayLarge!.copyWith(
+                    color: isPositive ? AppTheme.success : AppTheme.error,
+                  ),
+              child: Text(Formatters.formatCurrency(balance)),
             ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildBalanceItem(
-                  'Receitas',
-                  provider.totalIncome,
-                  AppTheme.success,
-                  Icons.arrow_upward,
+                _BalanceItem(
+                  label: 'Receitas',
+                  value: income,
+                  color: AppTheme.success,
+                  icon: Icons.arrow_upward,
                 ),
-                _buildBalanceItem(
-                  'Despesas',
-                  provider.totalExpense,
-                  AppTheme.error,
-                  Icons.arrow_downward,
+                Container(
+                  height: 40,
+                  width: 1,
+                  color: AppTheme.surface,
+                ),
+                _BalanceItem(
+                  label: 'Despesas',
+                  value: expense,
+                  color: AppTheme.error,
+                  icon: Icons.arrow_downward,
                 ),
               ],
             ),
@@ -147,11 +769,33 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     );
   }
+}
 
-  Widget _buildBalanceItem(String label, double value, Color color, IconData icon) {
+class _BalanceItem extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+  final IconData icon;
+
+  const _BalanceItem({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 24),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
         const SizedBox(height: 8),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 4),
@@ -162,122 +806,174 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ],
     );
   }
+}
 
-  Widget _buildChart(TransactionProvider provider) {
-    final income = provider.totalIncome;
-    final expense = provider.totalExpense;
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
 
-    if (income == 0 && expense == 0) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Column(
-              children: [
-                const Icon(Icons.pie_chart, size: 64, color: AppTheme.textSecondary),
-                const SizedBox(height: 16),
-                Text('Nenhuma transação ainda', style: Theme.of(context).textTheme.bodySmall),
-              ],
+  const _LegendItem({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    );
+  }
+}
+
+class _UserAvatar extends StatelessWidget {
+  final UserModel user;
+
+  const _UserAvatar({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: AppTheme.primary,
+      backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+      child: user.photoUrl == null
+          ? Text(
+              user.initials,
+              style: const TextStyle(
+                color: AppTheme.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _UserAccountModal extends StatelessWidget {
+  final UserModel user;
+
+  const _UserAccountModal({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Hero(
+            tag: 'user_avatar',
+            child: CircleAvatar(
+              radius: 36,
+              backgroundColor: AppTheme.primary,
+              backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+              child: user.photoUrl == null
+                  ? Text(
+                      user.initials,
+                      style: const TextStyle(
+                        color: AppTheme.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
           ),
-        ),
-      );
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Distribuição', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 200,
-              child: PieChart(
-                PieChartData(
-                  sections: [
-                    PieChartSectionData(
-                      value: income,
-                      title: 'Receitas',
-                      color: AppTheme.success,
-                      radius: 60,
-                      titleStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.white,
-                      ),
-                    ),
-                    PieChartSectionData(
-                      value: expense,
-                      title: 'Despesas',
-                      color: AppTheme.error,
-                      radius: 60,
-                      titleStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.white,
-                      ),
-                    ),
-                  ],
-                  sectionsSpace: 2,
-                  centerSpaceRadius: 40,
-                ),
-              ),
+          const SizedBox(height: 12),
+          Text(
+            user.displayName ?? user.firstName,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            user.email,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 12),
+          _AccountInfoRow(label: 'Agência', value: '0001'),
+          const SizedBox(height: 12),
+          _AccountInfoRow(
+            label: 'Conta',
+            value: '${user.id.substring(0, 5).toUpperCase()}-7',
+          ),
+          const SizedBox(height: 12),
+          _AccountInfoRow(
+            label: 'Chave Pix',
+            value: user.email,
+          ),
+          const SizedBox(height: 12),
+          _AccountInfoRow(label: 'E-mail', value: user.email),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Fechar'),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildQuickActions(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+class _AccountInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _AccountInfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Ações Rápidas', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(context, 'Ver Transações', Icons.list, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TransactionListScreen()),
-                );
-              }),
-            ),
-          ],
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Flexible(
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildActionButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return Card(
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(icon, color: AppTheme.primary, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
+class _MonthData {
+  final int year;
+  final int month;
+  final double income;
+  final double expense;
+  final double balance;
+
+  const _MonthData({
+    required this.year,
+    required this.month,
+    required this.income,
+    required this.expense,
+    this.balance = 0,
+  });
+
+  _MonthData copyWith({double? income, double? expense, double? balance}) {
+    return _MonthData(
+      year: year,
+      month: month,
+      income: income ?? this.income,
+      expense: expense ?? this.expense,
+      balance: balance ?? this.balance,
     );
   }
 }
