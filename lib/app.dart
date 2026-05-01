@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
-import 'providers/auth_provider.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -47,13 +48,26 @@ class _AppState extends State<App> {
       supportedLocales: const [Locale('pt', 'BR')],
       home: _showSplash
           ? const SplashScreen()
-          : Consumer<AuthProvider>(
-              builder: (context, authProvider, _) {
-                if (authProvider.isLoading) {
-                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          : BlocConsumer<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthAuthenticated) {
+                  context.read<TransactionBloc>().add(
+                        LoadTransactions(userId: state.user.id, refresh: true),
+                      );
+                }
+              },
+              builder: (context, state) {
+                if (state is AuthInitial || state is AuthLoading) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
                 }
 
-                return authProvider.user != null ? const DashboardScreen() : const LoginScreen();
+                if (state is AuthAuthenticated) {
+                  return const DashboardScreen();
+                }
+
+                return const LoginScreen();
               },
             ),
     );
