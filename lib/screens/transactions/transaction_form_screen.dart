@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/transactions/presentation/bloc/transaction_bloc.dart';
 import '../../models/transaction_model.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/transaction_provider.dart';
 import '../../widgets/custom_input.dart';
 
 class TransactionFormScreen extends StatefulWidget {
@@ -61,7 +61,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
       setState(() {
         _receiptFile = pickedFile;
@@ -76,7 +75,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
-
     if (picked != null) {
       setState(() {
         _date = picked;
@@ -84,17 +82,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-  Future<void> _submit() async {
+  void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = context.read<AuthProvider>();
-    final transactionProvider = context.read<TransactionProvider>();
-
-    if (authProvider.user == null) return;
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return;
 
     final transaction = TransactionModel(
       id: widget.transaction?.id,
-      userId: authProvider.user!.id,
+      userId: authState.user.id,
       title: _titleController.text.trim(),
       value: Formatters.parseCurrency(_valueController.text),
       category: _category,
@@ -103,174 +99,170 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       receiptUrl: widget.transaction?.receiptUrl,
     );
 
-    bool success;
     if (widget.transaction == null) {
-      success = await transactionProvider.addTransaction(transaction, receiptFile: _receiptFile);
+      context.read<TransactionBloc>().add(
+            AddTransactionRequested(transaction: transaction, receiptFile: _receiptFile),
+          );
     } else {
-      success = await transactionProvider.updateTransaction(transaction, receiptFile: _receiptFile);
-    }
-
-    if (!mounted) return;
-
-    if (success) {
-      final messenger = ScaffoldMessenger.of(context);
-      Navigator.pop(context);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.transaction == null
-                ? 'Transação adicionada com sucesso'
-                : 'Transação atualizada com sucesso',
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(transactionProvider.errorMessage ?? 'Erro ao salvar transação'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      context.read<TransactionBloc>().add(
+            UpdateTransactionRequested(transaction: transaction, receiptFile: _receiptFile),
+          );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final transactionProvider = context.watch<TransactionProvider>();
     final isEdit = widget.transaction != null;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? 'Editar Transação' : 'Nova Transação')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CustomInput(
-                label: 'Título',
-                controller: _titleController,
-                maxLength: 50,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Título é obrigatório';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              CustomInput(
-                label: 'Valor',
-                controller: _valueController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [CurrencyInputFormatter(maxDigits: 8)],
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Valor é obrigatório';
-                  }
-                  final numValue = Formatters.parseCurrency(value);
-                  if (numValue <= 0) {
-                    return 'Valor deve ser maior que zero';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
-              const SizedBox(height: 8),
-              SegmentedButton<TransactionType>(
-                segments: const [
-                  ButtonSegment(
-                    value: TransactionType.expense,
-                    label: Text('Despesa'),
-                    icon: Icon(Icons.arrow_downward),
+    return BlocConsumer<TransactionBloc, TransactionState>(
+      listener: (context, state) {
+        if (state is TransactionActionSuccess) {
+          Navigator.pop(context);
+        } else if (state is TransactionActionFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.error,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isSubmitting = state is TransactionLoaded && state.isSubmitting;
+
+        return Scaffold(
+          appBar: AppBar(title: Text(isEdit ? 'Editar Transação' : 'Nova Transação')),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CustomInput(
+                    label: 'Título',
+                    controller: _titleController,
+                    maxLength: 50,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Título é obrigatório';
+                      return null;
+                    },
                   ),
-                  ButtonSegment(
-                    value: TransactionType.income,
-                    label: Text('Receita'),
-                    icon: Icon(Icons.arrow_upward),
+                  const SizedBox(height: 16),
+                  CustomInput(
+                    label: 'Valor',
+                    controller: _valueController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [CurrencyInputFormatter(maxDigits: 8)],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Valor é obrigatório';
+                      final numValue = Formatters.parseCurrency(value);
+                      if (numValue <= 0) return 'Valor deve ser maior que zero';
+                      return null;
+                    },
                   ),
-                ],
-                selected: {_type},
-                onSelectionChanged: (newSelection) {
-                  setState(() {
-                    _type = newSelection.first;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Categoria'),
-                initialValue: _category,
-                items: _categories.map((category) {
-                  return DropdownMenuItem(value: category, child: Text(category));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _category = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: const Text('Data'),
-                subtitle: Text(Formatters.formatDate(_date)),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _selectDate,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 16),
-              Text('Recibo (opcional)', style: Theme.of(context).textTheme.labelMedium),
-              const SizedBox(height: 8),
-              if (_receiptFile != null)
-                _ReceiptPreview(
-                  receiptFile: _receiptFile!,
-                  onRemove: () {
-                    setState(() {
-                      _receiptFile = null;
-                    });
-                  },
-                )
-              else if (widget.transaction?.receiptUrl != null)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(Icons.receipt, color: AppTheme.textSecondary),
-                        SizedBox(width: 8),
-                        Text('Recibo já cadastrado'),
-                      ],
+                  const SizedBox(height: 16),
+                  Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: 8),
+                  SegmentedButton<TransactionType>(
+                    segments: const [
+                      ButtonSegment(
+                        value: TransactionType.expense,
+                        label: Text('Despesa'),
+                        icon: Icon(Icons.arrow_downward),
+                      ),
+                      ButtonSegment(
+                        value: TransactionType.income,
+                        label: Text('Receita'),
+                        icon: Icon(Icons.arrow_upward),
+                      ),
+                    ],
+                    selected: {_type},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        _type = newSelection.first;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'Categoria'),
+                    initialValue: _category,
+                    items: _categories.map((category) {
+                      return DropdownMenuItem(value: category, child: Text(category));
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _category = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    title: const Text('Data'),
+                    subtitle: Text(Formatters.formatDate(_date)),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: _selectDate,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Recibo (opcional)', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: 8),
+                  if (_receiptFile != null)
+                    _ReceiptPreview(
+                      receiptFile: _receiptFile!,
+                      onRemove: () {
+                        setState(() {
+                          _receiptFile = null;
+                        });
+                      },
+                    )
+                  else if (widget.transaction?.receiptUrl != null)
+                    const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.receipt, color: AppTheme.textSecondary),
+                            SizedBox(width: 8),
+                            Text('Recibo já cadastrado'),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Adicionar Recibo'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting ? null : _submit,
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.white,
+                              ),
+                            )
+                          : Text(isEdit ? 'Atualizar' : 'Adicionar'),
                     ),
                   ),
-                )
-              else
-                OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Adicionar Recibo'),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: transactionProvider.isLoading ? null : _submit,
-                  child: transactionProvider.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.white),
-                        )
-                      : Text(isEdit ? 'Atualizar' : 'Adicionar'),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -294,7 +286,10 @@ class _ReceiptPreview extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(image: MemoryImage(snapshot.data!), fit: BoxFit.cover),
+                  image: DecorationImage(
+                    image: MemoryImage(snapshot.data!),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               Positioned(
@@ -309,7 +304,10 @@ class _ReceiptPreview extends StatelessWidget {
             ],
           );
         }
-        return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+        return const SizedBox(
+          height: 200,
+          child: Center(child: CircularProgressIndicator()),
+        );
       },
     );
   }
