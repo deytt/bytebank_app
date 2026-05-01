@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/transactions/presentation/bloc/transaction_bloc.dart';
 import '../../models/transaction_model.dart';
-import '../../providers/transaction_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../widgets/transaction_card.dart';
 import 'transaction_form_screen.dart';
 
@@ -38,11 +38,9 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _searchController.addListener(() {
-      setState(() {});
-    });
+    _searchController.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadInitialTransactions();
+      _loadInitial();
     });
   }
 
@@ -53,39 +51,45 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     super.dispose();
   }
 
-  void _loadInitialTransactions() {
-    final authProvider = context.read<AuthProvider>();
-    final transactionProvider = context.read<TransactionProvider>();
-    if (authProvider.user != null) {
-      transactionProvider.loadTransactions(authProvider.user!.id, refresh: true);
+  String? get _userId {
+    final authState = context.read<AuthBloc>().state;
+    return authState is AuthAuthenticated ? authState.user.id : null;
+  }
+
+  void _loadInitial() {
+    final uid = _userId;
+    if (uid != null) {
+      context.read<TransactionBloc>().add(
+            LoadTransactions(userId: uid, refresh: true),
+          );
     }
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
-      context.read<TransactionProvider>().loadMoreTransactions();
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.8) {
+      context.read<TransactionBloc>().add(const LoadMoreTransactions());
     }
   }
 
   void _applyFilters() {
-    final authProvider = context.read<AuthProvider>();
-    final transactionProvider = context.read<TransactionProvider>();
-    final user = authProvider.user;
+    final uid = _userId;
+    if (uid == null) return;
 
-    if (user != null) {
-      final searchText = _searchController.text.trim();
-      final searchTitle = (searchText.isEmpty || searchText.length < 3) ? null : searchText;
+    final searchText = _searchController.text.trim();
+    final searchTitle = (searchText.isEmpty || searchText.length < 3) ? null : searchText;
 
-      transactionProvider.loadTransactions(
-        user.id,
-        category: _selectedCategory,
-        searchTitle: searchTitle,
-        hasReceipt: _hasReceipt,
-        dateRangeDays: _selectedDateRange,
-        type: _selectedType,
-        refresh: true,
-      );
-    }
+    context.read<TransactionBloc>().add(
+          LoadTransactions(
+            userId: uid,
+            category: _selectedCategory,
+            searchTitle: searchTitle,
+            hasReceipt: _hasReceipt,
+            dateRangeDays: _selectedDateRange,
+            type: _selectedType,
+            refresh: true,
+          ),
+        );
   }
 
   void _clearFilters() {
@@ -96,276 +100,267 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       _selectedType = null;
       _searchController.clear();
     });
-    context.read<TransactionProvider>().clearFilters();
+    context.read<TransactionBloc>().add(const ClearTransactionFilters());
   }
 
-  bool get _hasActiveFilters {
-    return _selectedCategory != null ||
-        _hasReceipt != null ||
-        _selectedDateRange != null ||
-        _selectedType != null ||
-        _searchController.text.isNotEmpty;
-  }
+  bool get _hasActiveFilters =>
+      _selectedCategory != null ||
+      _hasReceipt != null ||
+      _selectedDateRange != null ||
+      _selectedType != null ||
+      _searchController.text.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    final transactionProvider = context.watch<TransactionProvider>();
-    final transactions = transactionProvider.transactions;
+    return BlocConsumer<TransactionBloc, TransactionState>(
+      listener: (context, state) {
+        if (state is TransactionActionSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else if (state is TransactionActionFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.error,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final loaded = state is TransactionLoaded
+            ? state
+            : state is TransactionActionSuccess
+                ? state.data
+                : state is TransactionActionFailure
+                    ? state.data
+                    : null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Transações'),
-        actions: [
-          IconButton(icon: const Icon(Icons.filter_list), onPressed: () => _showFilterDialog()),
+        final transactions = loaded?.transactions ?? [];
+        final isLoading = state is TransactionLoading;
+        final isLoadingMore = loaded?.isLoadingMore ?? false;
+        final hasMore = loaded?.hasMore ?? false;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Transações'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: () => _showFilterDialog(),
+              ),
+            ],
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async => _loadInitial(),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por título (mín. 3 caracteres)...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _applyFilters();
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      helperText: _searchController.text.isNotEmpty &&
+                              _searchController.text.length < 3
+                          ? 'Digite pelo menos 3 caracteres'
+                          : null,
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                      if (value.isEmpty || value.length >= 3) {
+                        Future.delayed(const Duration(milliseconds: 500), () {
+                          if (_searchController.text == value) _applyFilters();
+                        });
+                      }
+                    },
+                  ),
+                ),
+                if (_hasActiveFilters) _buildActiveFiltersRow(),
+                Expanded(
+                  child: isLoading && transactions.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : transactions.isEmpty
+                          ? _buildEmpty()
+                          : ListView.builder(
+                              controller: _scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: transactions.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index == transactions.length) {
+                                  if (isLoadingMore) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(child: CircularProgressIndicator()),
+                                    );
+                                  }
+                                  if (!hasMore) {
+                                    return Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Center(
+                                        child: Text(
+                                          'Todas as transações foram carregadas',
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }
+
+                                final transaction = transactions[index];
+                                return TransactionCard(
+                                  transaction: transaction,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => TransactionFormScreen(
+                                          transaction: transaction,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  onDelete: () => _confirmDelete(context, transaction),
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TransactionFormScreen()),
+              );
+            },
+            backgroundColor: AppTheme.primary,
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveFiltersRow() {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          if (_selectedCategory != null)
+            _FilterChip(
+              label: _selectedCategory!,
+              onDeleted: () {
+                setState(() => _selectedCategory = null);
+                _applyFilters();
+              },
+            ),
+          if (_hasReceipt != null)
+            _FilterChip(
+              label: _hasReceipt! ? 'Com recibo' : 'Sem recibo',
+              onDeleted: () {
+                setState(() => _hasReceipt = null);
+                _applyFilters();
+              },
+            ),
+          if (_selectedDateRange != null)
+            _FilterChip(
+              label: 'Últimos $_selectedDateRange dias',
+              onDeleted: () {
+                setState(() => _selectedDateRange = null);
+                _applyFilters();
+              },
+            ),
+          if (_selectedType != null)
+            _FilterChip(
+              label: _selectedType == TransactionType.income ? 'Receita' : 'Despesa',
+              onDeleted: () {
+                setState(() => _selectedType = null);
+                _applyFilters();
+              },
+            ),
+          if (_searchController.text.isNotEmpty)
+            _FilterChip(
+              label: 'Busca: "${_searchController.text}"',
+              onDeleted: () {
+                _searchController.clear();
+                _applyFilters();
+              },
+            ),
+          TextButton.icon(
+            onPressed: _clearFilters,
+            icon: const Icon(Icons.clear_all, size: 18),
+            label: const Text('Limpar tudo'),
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _loadInitialTransactions();
-        },
-        child: Column(
-          children: [
-            // Campo de busca
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Buscar por título (mín. 3 caracteres)...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _applyFilters();
-                          },
-                        )
-                      : null,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  helperText: _searchController.text.isNotEmpty && _searchController.text.length < 3
-                      ? 'Digite pelo menos 3 caracteres'
-                      : null,
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                  if (value.isEmpty || value.length >= 3) {
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      if (_searchController.text == value) {
-                        _applyFilters();
-                      }
-                    });
-                  }
-                },
-              ),
-            ),
+    );
+  }
 
-            if (_hasActiveFilters)
-              Container(
-                height: 50,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    if (_selectedCategory != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: Text(_selectedCategory!),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            setState(() {
-                              _selectedCategory = null;
-                            });
-                            _applyFilters();
-                          },
-                        ),
-                      ),
-                    if (_hasReceipt != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: Text(_hasReceipt! ? 'Com recibo' : 'Sem recibo'),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            setState(() {
-                              _hasReceipt = null;
-                            });
-                            _applyFilters();
-                          },
-                        ),
-                      ),
-                    if (_selectedDateRange != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: Text('Últimos $_selectedDateRange dias'),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            setState(() {
-                              _selectedDateRange = null;
-                            });
-                            _applyFilters();
-                          },
-                        ),
-                      ),
-                    if (_selectedType != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: Text(
-                            _selectedType == TransactionType.income ? 'Receita' : 'Despesa',
-                          ),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            setState(() {
-                              _selectedType = null;
-                            });
-                            _applyFilters();
-                          },
-                        ),
-                      ),
-                    if (_searchController.text.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: Text('Busca: "${_searchController.text}"'),
-                          deleteIcon: const Icon(Icons.close, size: 18),
-                          onDeleted: () {
-                            _searchController.clear();
-                            _applyFilters();
-                          },
-                        ),
-                      ),
-                    TextButton.icon(
-                      onPressed: _clearFilters,
-                      icon: const Icon(Icons.clear_all, size: 18),
-                      label: const Text('Limpar tudo'),
-                    ),
-                  ],
-                ),
-              ),
-
-            Expanded(
-              child: transactionProvider.isLoading && transactions.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : transactions.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.receipt_long, size: 64, color: AppTheme.textSecondary),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Nenhuma transação encontrada',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      itemCount: transactions.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == transactions.length) {
-                          if (transactionProvider.isLoadingMore) {
-                            return const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          } else if (!transactionProvider.hasMore) {
-                            return Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Center(
-                                child: Text(
-                                  'Todas as transações foram carregadas',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        }
-
-                        final transaction = transactions[index];
-                        return TransactionCard(
-                          transaction: transaction,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TransactionFormScreen(transaction: transaction),
-                              ),
-                            );
-                          },
-                          onDelete: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Confirmar exclusão'),
-                                content: const Text('Deseja realmente excluir esta transação?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text(
-                                      'Cancelar',
-                                      style: TextStyle(color: AppTheme.white),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.error,
-                                    ),
-                                    child: const Text('Excluir'),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (confirm == true && context.mounted) {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final success = await transactionProvider.deleteTransaction(
-                                transaction,
-                              );
-
-                              if (success) {
-                                messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Transação excluída com sucesso'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } else {
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      transactionProvider.errorMessage ??
-                                          'Erro ao excluir transação',
-                                    ),
-                                    backgroundColor: AppTheme.error,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const TransactionFormScreen()));
-        },
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add),
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.receipt_long, size: 64, color: AppTheme.textSecondary),
+          const SizedBox(height: 16),
+          Text(
+            'Nenhuma transação encontrada',
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge
+                ?.copyWith(color: AppTheme.textSecondary),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, TransactionModel transaction) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmar exclusão'),
+        content: const Text('Deseja realmente excluir esta transação?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      context.read<TransactionBloc>().add(
+            DeleteTransactionRequested(transaction),
+          );
+    }
   }
 
   void _showFilterDialog() {
@@ -393,23 +388,15 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                     ChoiceChip(
                       label: const Text('Todas'),
                       selected: tempCategory == null,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempCategory = null;
-                        });
-                      },
+                      onSelected: (_) => setDialogState(() => tempCategory = null),
                     ),
-                    ..._categories.map(
-                      (category) => ChoiceChip(
-                        label: Text(category),
-                        selected: tempCategory == category,
-                        onSelected: (selected) {
-                          setDialogState(() {
-                            tempCategory = selected ? category : null;
-                          });
-                        },
-                      ),
-                    ),
+                    ..._categories.map((category) => ChoiceChip(
+                          label: Text(category),
+                          selected: tempCategory == category,
+                          onSelected: (selected) => setDialogState(
+                            () => tempCategory = selected ? category : null,
+                          ),
+                        )),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -422,29 +409,19 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                     ChoiceChip(
                       label: const Text('Todos'),
                       selected: tempHasReceipt == null,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempHasReceipt = null;
-                        });
-                      },
+                      onSelected: (_) => setDialogState(() => tempHasReceipt = null),
                     ),
                     ChoiceChip(
                       label: const Text('Com recibo'),
                       selected: tempHasReceipt == true,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempHasReceipt = selected ? true : null;
-                        });
-                      },
+                      onSelected: (s) =>
+                          setDialogState(() => tempHasReceipt = s ? true : null),
                     ),
                     ChoiceChip(
                       label: const Text('Sem recibo'),
                       selected: tempHasReceipt == false,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempHasReceipt = selected ? false : null;
-                        });
-                      },
+                      onSelected: (s) =>
+                          setDialogState(() => tempHasReceipt = s ? false : null),
                     ),
                   ],
                 ),
@@ -458,38 +435,25 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                     ChoiceChip(
                       label: const Text('Todos'),
                       selected: tempDateRange == null,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempDateRange = null;
-                        });
-                      },
+                      onSelected: (_) => setDialogState(() => tempDateRange = null),
                     ),
                     ChoiceChip(
                       label: const Text('Últimos 15 dias'),
                       selected: tempDateRange == 15,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempDateRange = selected ? 15 : null;
-                        });
-                      },
+                      onSelected: (s) =>
+                          setDialogState(() => tempDateRange = s ? 15 : null),
                     ),
                     ChoiceChip(
                       label: const Text('Últimos 30 dias'),
                       selected: tempDateRange == 30,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempDateRange = selected ? 30 : null;
-                        });
-                      },
+                      onSelected: (s) =>
+                          setDialogState(() => tempDateRange = s ? 30 : null),
                     ),
                     ChoiceChip(
                       label: const Text('Últimos 90 dias'),
                       selected: tempDateRange == 90,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempDateRange = selected ? 90 : null;
-                        });
-                      },
+                      onSelected: (s) =>
+                          setDialogState(() => tempDateRange = s ? 90 : null),
                     ),
                   ],
                 ),
@@ -503,29 +467,21 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                     ChoiceChip(
                       label: const Text('Todos'),
                       selected: tempType == null,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempType = null;
-                        });
-                      },
+                      onSelected: (_) => setDialogState(() => tempType = null),
                     ),
                     ChoiceChip(
                       label: const Text('Receita'),
                       selected: tempType == TransactionType.income,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempType = selected ? TransactionType.income : null;
-                        });
-                      },
+                      onSelected: (s) => setDialogState(
+                        () => tempType = s ? TransactionType.income : null,
+                      ),
                     ),
                     ChoiceChip(
                       label: const Text('Despesa'),
                       selected: tempType == TransactionType.expense,
-                      onSelected: (selected) {
-                        setDialogState(() {
-                          tempType = selected ? TransactionType.expense : null;
-                        });
-                      },
+                      onSelected: (s) => setDialogState(
+                        () => tempType = s ? TransactionType.expense : null,
+                      ),
                     ),
                   ],
                 ),
@@ -552,6 +508,25 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             child: const Text('Aplicar'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onDeleted;
+
+  const _FilterChip({required this.label, required this.onDeleted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Chip(
+        label: Text(label),
+        deleteIcon: const Icon(Icons.close, size: 18),
+        onDeleted: onDeleted,
       ),
     );
   }
