@@ -42,7 +42,19 @@ dependencies:
   firebase_storage: ^12.3.7
 
   # State Management
-  provider: ^6.1.2
+  flutter_bloc: ^8.1.4
+  equatable: ^2.0.5
+  bloc: ^8.1.4
+
+  # Auth
+  google_sign_in: ^6.2.1
+
+  # Security
+  encrypt: ^5.0.3
+  flutter_secure_storage: ^9.2.2
+
+  # Reactive
+  rxdart: ^0.28.0
 
   # UI
   fl_chart: ^0.70.2
