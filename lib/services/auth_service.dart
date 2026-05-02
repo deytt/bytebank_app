@@ -72,7 +72,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
     } catch (e) {
-      throw Exception('Erro ao fazer login com Google');
+      throw Exception('Erro ao fazer login com Google: $e');
     }
   }
 
@@ -89,6 +89,8 @@ class AuthService {
         return Exception('Usuário não encontrado');
       case 'wrong-password':
         return Exception('Senha incorreta');
+      case 'invalid-credential':
+        return Exception('E-mail ou senha incorretos');
       case 'email-already-in-use':
         return Exception('E-mail já cadastrado');
       case 'invalid-email':
