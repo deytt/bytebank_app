@@ -12,7 +12,20 @@
           "package_name": "com.postech.bytebankapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1093070321011-9mmbvvif39mo9pfossab0g8rj9o1ceff.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.postech.bytebankapp",
+            "certificate_hash": "7e393afc0d0b23a5366290a4260d169739715789"
+          }
+        },
+        {
+          "client_id": "1093070321011-81cc1bqi3l74sifg5nqql0iab0qtudgc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD5wScl54SDSsio9NXHk-26zVbc9b_bjqk"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1093070321011-81cc1bqi3l74sifg5nqql0iab0qtudgc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1093070321011-doaovkqvi81n1og6fb2nq25iink9o4k0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.postech.bytebankapp"
+              }
+            }
+          ]
         }
       }
     }
