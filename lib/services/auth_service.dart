@@ -1,10 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '1093070321011-81cc1bqi3l74sifg5nqql0iab0qtudgc.apps.googleusercontent.com'
+        : null,
+  );
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
