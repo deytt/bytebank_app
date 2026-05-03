@@ -37,6 +37,24 @@ class _CarouselItemData {
   });
 }
 
+class _StoryItemData {
+  final String label;
+  final IconData icon;
+  final List<Color> gradientColors;
+  final String offerTitle;
+  final String offerSubtitle;
+  final String offerCta;
+
+  const _StoryItemData({
+    required this.label,
+    required this.icon,
+    required this.gradientColors,
+    required this.offerTitle,
+    required this.offerSubtitle,
+    required this.offerCta,
+  });
+}
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -53,6 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   late AnimationController _chartController;
   late AnimationController _actionsController;
 
+  late AnimationController _storiesController;
   late AnimationController _services1Controller;
   late AnimationController _services2Controller;
   late AnimationController _carouselController;
@@ -67,6 +86,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   late Animation<Offset> _chartSlide;
   late Animation<double> _actionsFade;
 
+  late Animation<double> _storiesFade;
+  late Animation<Offset> _storiesSlide;
   late Animation<double> _services1Fade;
   late Animation<Offset> _services1Slide;
   late Animation<double> _services2Fade;
@@ -104,6 +125,45 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     ),
   ];
 
+  static const _storyItems = [
+    _StoryItemData(
+      label: 'Cashback',
+      icon: Icons.card_giftcard,
+      gradientColors: [Color(0xFF4C1D95), Color(0xFF6D28D9)],
+      offerTitle: 'Cashback especial',
+      offerSubtitle:
+          'Ganhe até 5% de volta em compras online selecionadas. Ative agora e aproveite nas suas lojas favoritas.',
+      offerCta: 'Ativar cashback',
+    ),
+    _StoryItemData(
+      label: 'Empréstimo',
+      icon: Icons.attach_money,
+      gradientColors: [Color(0xFF1E3A5F), Color(0xFF2563EB)],
+      offerTitle: 'Empréstimo pessoal',
+      offerSubtitle:
+          'Taxas a partir de 1,29% a.m. com aprovação em minutos. Simule agora sem comprometer seu score.',
+      offerCta: 'Simular agora',
+    ),
+    _StoryItemData(
+      label: 'Conta',
+      icon: Icons.account_balance_wallet,
+      gradientColors: [Color(0xFF064E3B), Color(0xFF059669)],
+      offerTitle: 'Conta digital grátis',
+      offerSubtitle:
+          'Sem tarifas de manutenção e com rendimento automático. Indique amigos e ganhe bônus exclusivos.',
+      offerCta: 'Abrir conta',
+    ),
+    _StoryItemData(
+      label: 'Investir',
+      icon: Icons.trending_up,
+      gradientColors: [Color(0xFF78350F), Color(0xFFD97706)],
+      offerTitle: 'Invista agora',
+      offerSubtitle:
+          'Rendimento de até 120% do CDI com liquidez diária. Comece com qualquer valor e veja seu dinheiro crescer.',
+      offerCta: 'Começar a investir',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -112,6 +172,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   }
 
   void _setupAnimations() {
+    _storiesController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
     _headerController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -173,6 +237,15 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       end: 1.0,
     ).animate(CurvedAnimation(parent: _actionsController, curve: Curves.easeOut));
 
+    _storiesFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _storiesController, curve: Curves.easeOut));
+    _storiesSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _storiesController, curve: Curves.easeOutCubic));
+
     _services1Fade = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -206,6 +279,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   Future<void> _runAnimationSequence() async {
     await _headerController.forward();
     await Future.delayed(const Duration(milliseconds: 100));
+    _storiesController.forward();
+    await Future.delayed(const Duration(milliseconds: 150));
     await _balanceController.forward();
     await Future.delayed(const Duration(milliseconds: 100));
     _chartController.forward();
@@ -221,6 +296,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
 
   @override
   void dispose() {
+    _storiesController.dispose();
     _headerController.dispose();
     _balanceController.dispose();
     _chartController.dispose();
@@ -377,6 +453,14 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SlideTransition(
+            position: _storiesSlide,
+            child: FadeTransition(
+              opacity: _storiesFade,
+              child: _StoriesSection(items: _storyItems),
+            ),
+          ),
+          const SizedBox(height: 20),
           SlideTransition(
             position: _balanceSlide,
             child: FadeTransition(
@@ -1656,6 +1740,364 @@ class _MonthData {
       income: income ?? this.income,
       expense: expense ?? this.expense,
       balance: balance ?? this.balance,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Stories
+// ─────────────────────────────────────────────
+
+class _StoriesSection extends StatelessWidget {
+  final List<_StoryItemData> items;
+
+  const _StoriesSection({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text('Novidades para você', style: Theme.of(context).textTheme.headlineMedium),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 96,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: GestureDetector(
+                  onTap: () => _openStoryViewer(context, index),
+                  child: SizedBox(
+                    width: 64,
+                    child: Column(
+                      children: [
+                        _StoryAvatar(item: item),
+                        const SizedBox(height: 6),
+                        Text(
+                          item.label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openStoryViewer(BuildContext context, int initialIndex) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black,
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (ctx, anim, _, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.92,
+              end: 1.0,
+            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, a1, a2) => _StoryViewer(items: items, initialIndex: initialIndex),
+    );
+  }
+}
+
+class _StoryAvatar extends StatelessWidget {
+  final _StoryItemData item;
+
+  const _StoryAvatar({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60,
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: item.gradientColors,
+        ),
+      ),
+      child: Container(
+        decoration: const BoxDecoration(shape: BoxShape.circle, color: AppTheme.background),
+        padding: const EdgeInsets.all(2),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                item.gradientColors[0].withValues(alpha: 0.25),
+                item.gradientColors[1].withValues(alpha: 0.25),
+              ],
+            ),
+          ),
+          child: Icon(item.icon, color: item.gradientColors[1], size: 26),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Story Viewer
+// ─────────────────────────────────────────────
+
+class _StoryViewer extends StatefulWidget {
+  final List<_StoryItemData> items;
+  final int initialIndex;
+
+  const _StoryViewer({required this.items, required this.initialIndex});
+
+  @override
+  State<_StoryViewer> createState() => _StoryViewerState();
+}
+
+class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderStateMixin {
+  late int _currentIndex;
+  late AnimationController _progressController;
+
+  static const _storyDuration = Duration(seconds: 5);
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _progressController = AnimationController(vsync: this, duration: _storyDuration);
+    _progressController.addStatusListener(_onProgressStatus);
+    _progressController.forward();
+  }
+
+  void _onProgressStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      _goToNext();
+    }
+  }
+
+  void _goToNext() {
+    if (_currentIndex < widget.items.length - 1) {
+      setState(() => _currentIndex++);
+      _progressController.forward(from: 0);
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _goToPrevious() {
+    if (_currentIndex > 0) {
+      setState(() => _currentIndex--);
+      _progressController.forward(from: 0);
+    } else {
+      _progressController.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _progressController.removeStatusListener(_onProgressStatus);
+    _progressController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.items[_currentIndex];
+    final size = MediaQuery.of(context).size;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: size.width,
+        height: size.height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              item.gradientColors[0],
+              item.gradientColors[1],
+              Colors.black.withValues(alpha: 0.6),
+            ],
+            stops: const [0.0, 0.55, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // Área de toque: esquerda/direita
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _goToPrevious,
+                      behavior: HitTestBehavior.translucent,
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _goToNext,
+                      behavior: HitTestBehavior.translucent,
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Barras de progresso
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    child: Row(
+                      children: List.generate(widget.items.length, (i) {
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: AnimatedBuilder(
+                                animation: _progressController,
+                                builder: (context, child) {
+                                  double value;
+                                  if (i < _currentIndex) {
+                                    value = 1.0;
+                                  } else if (i == _currentIndex) {
+                                    value = _progressController.value;
+                                  } else {
+                                    value = 0.0;
+                                  }
+                                  return LinearProgressIndicator(
+                                    value: value,
+                                    minHeight: 3,
+                                    backgroundColor: AppTheme.white.withValues(alpha: 0.3),
+                                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.white),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  // Botão fechar
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8, top: 4),
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close, color: AppTheme.white, size: 28),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  // Conteúdo da oferta
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(item.icon, color: AppTheme.white, size: 48),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          item.offerTitle,
+                          style: const TextStyle(
+                            color: AppTheme.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          item.offerSubtitle,
+                          style: TextStyle(
+                            color: AppTheme.white.withValues(alpha: 0.88),
+                            fontSize: 15,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.white,
+                              foregroundColor: item.gradientColors[0],
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              item.offerCta,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(
+                              'Agora não',
+                              style: TextStyle(
+                                color: AppTheme.white.withValues(alpha: 0.7),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
