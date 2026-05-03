@@ -1,18 +1,22 @@
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../models/transaction_model.dart';
-import '../../../../services/transaction_service.dart';
-import '../../../../services/storage_service.dart';
+import '../../data/models/transaction_model.dart';
+import '../../domain/entities/transaction.dart';
+import '../../domain/usecases/get_transactions_usecase.dart';
+import '../../domain/usecases/add_transaction_usecase.dart';
+import '../../domain/usecases/update_transaction_usecase.dart';
+import '../../domain/usecases/delete_transaction_usecase.dart';
 
 part 'transaction_event.dart';
 part 'transaction_state.dart';
 
 class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
-  final TransactionService _transactionService;
-  final StorageService _storageService;
+  final GetTransactionsUseCase _getTransactions;
+  final AddTransactionUseCase _addTransaction;
+  final UpdateTransactionUseCase _updateTransaction;
+  final DeleteTransactionUseCase _deleteTransaction;
 
   String? _currentUserId;
   String? _currentCategory;
@@ -20,13 +24,17 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   bool? _currentHasReceipt;
   int? _currentDateRangeDays;
   TransactionType? _currentType;
-  DocumentSnapshot? _lastDocument;
+  Object? _lastCursor;
 
   TransactionBloc({
-    TransactionService? transactionService,
-    StorageService? storageService,
-  })  : _transactionService = transactionService ?? TransactionService(),
-        _storageService = storageService ?? StorageService(),
+    required GetTransactionsUseCase getTransactions,
+    required AddTransactionUseCase addTransaction,
+    required UpdateTransactionUseCase updateTransaction,
+    required DeleteTransactionUseCase deleteTransaction,
+  })  : _getTransactions = getTransactions,
+        _addTransaction = addTransaction,
+        _updateTransaction = updateTransaction,
+        _deleteTransaction = deleteTransaction,
         super(const TransactionInitial()) {
     on<LoadTransactions>(_onLoadTransactions, transformer: restartable());
     on<LoadMoreTransactions>(_onLoadMoreTransactions);
@@ -41,7 +49,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     Emitter<TransactionState> emit,
   ) async {
     if (event.refresh) {
-      _lastDocument = null;
+      _lastCursor = null;
     }
 
     emit(const TransactionLoading());
@@ -54,7 +62,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     _currentType = event.type;
 
     try {
-      final result = await _transactionService.getTransactionsPaginated(
+      final page = await _getTransactions(
         event.userId,
         category: event.category,
         searchTitle: event.searchTitle,
@@ -63,21 +71,15 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
         type: event.type,
       );
 
-      final transactions = result['transactions'] as List<TransactionModel>;
-      _lastDocument = result['lastDocument'] as DocumentSnapshot?;
-      final hasMore = result['hasMore'] as bool;
+      _lastCursor = page.cursor;
 
-      final allResult = await _transactionService.getTransactionsPaginated(
-        event.userId,
-        limit: 1000,
-      );
-      final allTransactions = allResult['transactions'] as List<TransactionModel>;
+      final allPage = await _getTransactions(event.userId, limit: 1000);
 
       if (emit.isDone) return;
       emit(TransactionLoaded(
-        transactions: transactions,
-        allTransactions: allTransactions,
-        hasMore: hasMore,
+        transactions: page.transactions.cast<TransactionModel>(),
+        allTransactions: allPage.transactions.cast<TransactionModel>(),
+        hasMore: page.hasMore,
       ));
     } catch (e) {
       if (emit.isDone) return;
@@ -101,19 +103,20 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     emit(current.copyWith(isLoadingMore: true));
 
     try {
-      final result = await _transactionService.getTransactionsPaginated(
+      final page = await _getTransactions(
         _currentUserId!,
-        lastDocument: _lastDocument,
+        pageToken: _lastCursor,
         category: _currentCategory,
       );
 
-      final newTransactions = result['transactions'] as List<TransactionModel>;
-      _lastDocument = result['lastDocument'] as DocumentSnapshot?;
-      final hasMore = result['hasMore'] as bool;
+      _lastCursor = page.cursor;
 
       emit(current.copyWith(
-        transactions: [...current.transactions, ...newTransactions],
-        hasMore: hasMore,
+        transactions: [
+          ...current.transactions,
+          ...page.transactions.cast<TransactionModel>(),
+        ],
+        hasMore: page.hasMore,
         isLoadingMore: false,
       ));
     } catch (e) {
@@ -133,17 +136,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     }
 
     try {
-      String? receiptUrl;
-      if (event.receiptFile != null) {
-        receiptUrl = await _storageService.uploadReceipt(
-          event.receiptFile!,
-          event.transaction.userId,
-        );
-      }
-
-      final transactionWithReceipt = event.transaction.copyWith(receiptUrl: receiptUrl);
-      await _transactionService.addTransaction(transactionWithReceipt);
-
+      await _addTransaction(event.transaction, receiptFile: event.receiptFile);
       await _reloadAll(emit, 'Transação adicionada com sucesso');
     } catch (e) {
       if (currentLoaded != null) {
@@ -171,21 +164,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     }
 
     try {
-      String? receiptUrl = event.transaction.receiptUrl;
-
-      if (event.receiptFile != null) {
-        if (receiptUrl != null) {
-          await _storageService.deleteReceipt(receiptUrl);
-        }
-        receiptUrl = await _storageService.uploadReceipt(
-          event.receiptFile!,
-          event.transaction.userId,
-        );
-      }
-
-      final updated = event.transaction.copyWith(receiptUrl: receiptUrl);
-      await _transactionService.updateTransaction(updated);
-
+      await _updateTransaction(event.transaction, receiptFile: event.receiptFile);
       await _reloadAll(emit, 'Transação atualizada com sucesso');
     } catch (e) {
       if (currentLoaded != null) {
@@ -206,11 +185,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     Emitter<TransactionState> emit,
   ) async {
     try {
-      if (event.transaction.receiptUrl != null) {
-        await _storageService.deleteReceipt(event.transaction.receiptUrl!);
-      }
-      await _transactionService.deleteTransaction(event.transaction.id!);
-
+      await _deleteTransaction(event.transaction);
       await _reloadAll(emit, 'Transação excluída com sucesso');
     } catch (e) {
       final current = state;
@@ -232,7 +207,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     _currentHasReceipt = null;
     _currentDateRangeDays = null;
     _currentType = null;
-    _lastDocument = null;
+    _lastCursor = null;
 
     if (_currentUserId != null) {
       add(LoadTransactions(userId: _currentUserId!, refresh: true));
@@ -243,7 +218,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     if (_currentUserId == null) return;
 
     try {
-      final result = await _transactionService.getTransactionsPaginated(
+      final page = await _getTransactions(
         _currentUserId!,
         category: _currentCategory,
         searchTitle: _currentSearchTitle,
@@ -252,20 +227,14 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
         type: _currentType,
       );
 
-      final transactions = result['transactions'] as List<TransactionModel>;
-      _lastDocument = result['lastDocument'] as DocumentSnapshot?;
-      final hasMore = result['hasMore'] as bool;
+      _lastCursor = page.cursor;
 
-      final allResult = await _transactionService.getTransactionsPaginated(
-        _currentUserId!,
-        limit: 1000,
-      );
-      final allTransactions = allResult['transactions'] as List<TransactionModel>;
+      final allPage = await _getTransactions(_currentUserId!, limit: 1000);
 
       final loaded = TransactionLoaded(
-        transactions: transactions,
-        allTransactions: allTransactions,
-        hasMore: hasMore,
+        transactions: page.transactions.cast<TransactionModel>(),
+        allTransactions: allPage.transactions.cast<TransactionModel>(),
+        hasMore: page.hasMore,
       );
 
       if (emit.isDone) return;

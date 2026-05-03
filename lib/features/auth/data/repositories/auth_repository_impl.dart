@@ -1,86 +1,79 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../domain/entities/user.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../models/user_model.dart';
 
-class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class AuthRepositoryImpl implements AuthRepository {
+  final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb
         ? '1093070321011-81cc1bqi3l74sifg5nqql0iab0qtudgc.apps.googleusercontent.com'
         : null,
   );
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  @override
+  Stream<User?> get authStateChanges {
+    return _auth.authStateChanges().map((firebaseUser) {
+      if (firebaseUser == null) return null;
+      return UserModel(
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        displayName: firebaseUser.displayName,
+        photoUrl: firebaseUser.photoURL,
+      );
+    });
+  }
 
-  Future<UserModel?> signIn(String email, String password) async {
+  @override
+  Future<User?> signIn(String email, String password) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      if (credential.user != null) {
-        return UserModel(
-          id: credential.user!.uid,
-          email: credential.user!.email!,
-          displayName: credential.user!.displayName,
-          photoUrl: credential.user!.photoURL,
-        );
-      }
-      return null;
-    } on FirebaseAuthException catch (e) {
+      return _fromFirebaseUser(credential.user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
     }
   }
 
-  Future<UserModel?> signUp(String email, String password) async {
+  @override
+  Future<User?> signUp(String email, String password) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      if (credential.user != null) {
-        return UserModel(
-          id: credential.user!.uid,
-          email: credential.user!.email!,
-          displayName: credential.user!.displayName,
-          photoUrl: credential.user!.photoURL,
-        );
-      }
-      return null;
-    } on FirebaseAuthException catch (e) {
+      return _fromFirebaseUser(credential.user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
     }
   }
 
-  Future<UserModel?> signInWithGoogle() async {
+  @override
+  Future<User?> signInWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
       final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
+      final credential = firebase_auth.GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       final userCredential = await _auth.signInWithCredential(credential);
-      if (userCredential.user != null) {
-        return UserModel(
-          id: userCredential.user!.uid,
-          email: userCredential.user!.email!,
-          displayName: userCredential.user!.displayName,
-          photoUrl: userCredential.user!.photoURL,
-        );
-      }
-      return null;
-    } on FirebaseAuthException catch (e) {
+      return _fromFirebaseUser(userCredential.user);
+    } on firebase_auth.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
     } catch (e) {
       throw Exception('Erro ao fazer login com Google: $e');
     }
   }
 
+  @override
   Future<void> signOut() async {
     await Future.wait([
       _auth.signOut(),
@@ -88,7 +81,17 @@ class AuthService {
     ]);
   }
 
-  Exception _mapFirebaseError(FirebaseAuthException e) {
+  UserModel? _fromFirebaseUser(firebase_auth.User? firebaseUser) {
+    if (firebaseUser == null) return null;
+    return UserModel(
+      id: firebaseUser.uid,
+      email: firebaseUser.email!,
+      displayName: firebaseUser.displayName,
+      photoUrl: firebaseUser.photoURL,
+    );
+  }
+
+  Exception _mapFirebaseError(firebase_auth.FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
         return Exception('Usuário não encontrado');
