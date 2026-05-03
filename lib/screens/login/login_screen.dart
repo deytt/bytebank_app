@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme/app_theme.dart';
@@ -92,7 +93,34 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Fechar aplicativo'),
+              content: const Text('Deseja realmente fechar o aplicativo?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+                  child: const Text('Fechar'),
+                ),
+              ],
+            ),
+          );
+          if (confirm == true) {
+            SystemNavigator.pop();
+          }
+        }
+      },
+      child: BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -275,6 +303,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ),
         );
       },
+      ),
     );
   }
 }
