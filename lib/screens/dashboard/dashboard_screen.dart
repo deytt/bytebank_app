@@ -50,21 +50,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   static const _dailyServices = [
     ServiceCardData(icon: Icons.account_balance, label: 'Meus bancos', color: AppTheme.primary),
     ServiceCardData(icon: Icons.smartphone, label: 'Token', color: AppTheme.primaryLight),
-    ServiceCardData(
-      icon: Icons.credit_card,
-      label: 'Limite de crédito',
-      color: AppTheme.success,
-    ),
-    ServiceCardData(
-      icon: Icons.calendar_today,
-      label: 'Agendamentos',
-      color: AppTheme.primary,
-    ),
-    ServiceCardData(
-      icon: Icons.receipt_long,
-      label: 'Boletos - DDA',
-      color: AppTheme.primaryLight,
-    ),
+    ServiceCardData(icon: Icons.credit_card, label: 'Limite de crédito', color: AppTheme.success),
+    ServiceCardData(icon: Icons.calendar_today, label: 'Agendamentos', color: AppTheme.primary),
+    ServiceCardData(icon: Icons.receipt_long, label: 'Boletos - DDA', color: AppTheme.primaryLight),
     ServiceCardData(
       icon: Icons.arrow_forward_ios,
       label: 'Ver Mais',
@@ -75,16 +63,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   static const _financialServices = [
     ServiceCardData(icon: Icons.handshake, label: 'Renegociação', color: AppTheme.error),
     ServiceCardData(icon: Icons.group, label: 'Consórcio', color: AppTheme.primaryLight),
-    ServiceCardData(
-      icon: Icons.trending_up,
-      label: 'Capitalização',
-      color: AppTheme.success,
-    ),
-    ServiceCardData(
-      icon: Icons.currency_exchange,
-      label: 'Câmbio',
-      color: AppTheme.primary,
-    ),
+    ServiceCardData(icon: Icons.trending_up, label: 'Capitalização', color: AppTheme.success),
+    ServiceCardData(icon: Icons.currency_exchange, label: 'Câmbio', color: AppTheme.primary),
     ServiceCardData(icon: Icons.security, label: 'Seguros', color: AppTheme.primaryLight),
     ServiceCardData(
       icon: Icons.arrow_forward_ios,
@@ -173,58 +153,73 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       vsync: this,
     );
 
-    _headerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _headerController, curve: Curves.easeOut),
-    );
-    _headerSlide = Tween<Offset>(begin: const Offset(0.0, -0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic),
-    );
+    _headerFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOut));
+    _headerSlide = Tween<Offset>(
+      begin: const Offset(0.0, -0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic));
 
-    _balanceFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _balanceController, curve: Curves.easeOut),
-    );
-    _balanceSlide = Tween<Offset>(begin: const Offset(0.0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _balanceController, curve: Curves.easeOutCubic),
-    );
+    _balanceFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _balanceController, curve: Curves.easeOut));
+    _balanceSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _balanceController, curve: Curves.easeOutCubic));
 
-    _chartFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _chartController, curve: Curves.easeOut),
-    );
-    _chartSlide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _chartController, curve: Curves.easeOutCubic),
-    );
+    _chartFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _chartController, curve: Curves.easeOut));
+    _chartSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _chartController, curve: Curves.easeOutCubic));
 
-    _actionsFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _actionsController, curve: Curves.easeOut),
-    );
+    _actionsFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _actionsController, curve: Curves.easeOut));
 
-    _storiesFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _storiesController, curve: Curves.easeOut),
-    );
-    _storiesSlide = Tween<Offset>(begin: const Offset(0.0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _storiesController, curve: Curves.easeOutCubic),
-    );
+    _storiesFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _storiesController, curve: Curves.easeOut));
+    _storiesSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _storiesController, curve: Curves.easeOutCubic));
 
-    _services1Fade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _services1Controller, curve: Curves.easeOut),
-    );
-    _services1Slide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _services1Controller, curve: Curves.easeOutCubic),
-    );
+    _services1Fade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _services1Controller, curve: Curves.easeOut));
+    _services1Slide = Tween<Offset>(
+      begin: const Offset(0.0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _services1Controller, curve: Curves.easeOutCubic));
 
-    _services2Fade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _services2Controller, curve: Curves.easeOut),
-    );
-    _services2Slide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _services2Controller, curve: Curves.easeOutCubic),
-    );
+    _services2Fade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _services2Controller, curve: Curves.easeOut));
+    _services2Slide = Tween<Offset>(
+      begin: const Offset(0.0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _services2Controller, curve: Curves.easeOutCubic));
 
-    _carouselFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _carouselController, curve: Curves.easeOut),
-    );
-    _carouselSlide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _carouselController, curve: Curves.easeOutCubic),
-    );
+    _carouselFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _carouselController, curve: Curves.easeOut));
+    _carouselSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _carouselController, curve: Curves.easeOutCubic));
   }
 
   Future<void> _runAnimationSequence() async {
@@ -380,10 +375,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
               ),
             ),
           ),
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () => _confirmLogout(context),
-        ),
+        IconButton(icon: const Icon(Icons.logout), onPressed: () => _confirmLogout(context)),
       ],
     );
   }
@@ -415,9 +407,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             position: _chartSlide,
             child: FadeTransition(
               opacity: _chartFade,
-              child: DashboardChartCard(
-                transactions: loaded?.allTransactions ?? [],
-              ),
+              child: DashboardChartCard(transactions: loaded?.allTransactions ?? []),
             ),
           ),
           const SizedBox(height: 24),
@@ -425,10 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             position: _services1Slide,
             child: FadeTransition(
               opacity: _services1Fade,
-              child: const ServiceScrollSection(
-                title: 'Para seu dia a dia',
-                items: _dailyServices,
-              ),
+              child: const ServiceScrollSection(title: 'Para seu dia a dia', items: _dailyServices),
             ),
           ),
           const SizedBox(height: 20),
@@ -445,10 +432,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           const SizedBox(height: 20),
           SlideTransition(
             position: _carouselSlide,
-            child: FadeTransition(
-              opacity: _carouselFade,
-              child: const DashboardCarouselSection(),
-            ),
+            child: FadeTransition(opacity: _carouselFade, child: const DashboardCarouselSection()),
           ),
           const SizedBox(height: 80),
         ],

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transaction_repository.dart';
@@ -11,6 +12,74 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   static const String _collection = 'transactions';
   static const int _maxUploadSizeBytes = 30 * 1024 * 1024;
+
+  /// Returns the Hive box name for a given user's transaction cache.
+  String _boxName(String userId) => 'tx_$userId';
+
+  /// Converts a TransactionModel to a cache-safe map (no Firestore types).
+  Map<String, dynamic> _toCacheMap(TransactionModel model) {
+    final map = model.toMap();
+    return {
+      ...map,
+      'id': model.id,
+      // Replace Timestamp with int so Hive can persist it
+      'date': model.date.millisecondsSinceEpoch,
+    };
+  }
+
+  /// Builds a TransactionModel from a cache map.
+  TransactionModel _fromCacheMap(Map map) {
+    final raw = Map<String, dynamic>.from(map);
+    // Restore the date from millisecondsSinceEpoch
+    final dateMs = raw['date'] as int;
+    return TransactionModel(
+      id: raw['id'] as String?,
+      userId: raw['userId'] as String,
+      // title is stored encrypted; fromMap handles decryption via EncryptionService
+      title: raw['title'] as String,
+      value: (raw['value'] as num).toDouble(),
+      category: raw['category'] as String,
+      type: raw['type'] == 'income' ? TransactionType.income : TransactionType.expense,
+      date: DateTime.fromMillisecondsSinceEpoch(dateMs),
+      receiptUrl: raw['receiptUrl'] as String?,
+    );
+  }
+
+  Future<Box> _openBox(String userId) async {
+    final name = _boxName(userId);
+    if (Hive.isBoxOpen(name)) return Hive.box(name);
+    return Hive.openBox(name);
+  }
+
+  Future<void> _saveToCache(String userId, List<TransactionModel> models) async {
+    try {
+      final box = await _openBox(userId);
+      final maps = models.map(_toCacheMap).toList();
+      await box.put('transactions', maps);
+    } catch (_) {
+      // Cache write failure must never break the main flow
+    }
+  }
+
+  Future<List<TransactionModel>> _readFromCache(String userId) async {
+    try {
+      final box = await _openBox(userId);
+      final cached = box.get('transactions');
+      if (cached == null) return [];
+      return (cached as List).map((e) => _fromCacheMap(e as Map)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _clearCache(String userId) async {
+    try {
+      final box = await _openBox(userId);
+      await box.delete('transactions');
+    } catch (_) {
+      // Ignore cache errors
+    }
+  }
 
   @override
   Future<TransactionPage> getTransactionsPaginated(
@@ -71,12 +140,25 @@ class TransactionRepositoryImpl implements TransactionRepository {
         transactions = transactions.where((t) => t.type == type).toList();
       }
 
+      // Persist first unfiltered page to cache for offline access
+      final isFirstPage = pageToken == null && !hasLocalFilter;
+      if (isFirstPage) {
+        await _saveToCache(userId, transactions);
+      }
+
       return TransactionPage(
         transactions: transactions,
         hasMore: !hasLocalFilter && snapshot.docs.length >= limit,
         cursor: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
       );
     } catch (e) {
+      // Firestore unreachable — serve cached data if available
+      if (pageToken == null) {
+        final cached = await _readFromCache(userId);
+        if (cached.isNotEmpty) {
+          return TransactionPage(transactions: cached, hasMore: false, cursor: null);
+        }
+      }
       throw Exception('Erro ao carregar transações');
     }
   }
@@ -97,6 +179,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
               receiptUrl: transaction.receiptUrl,
             );
       await _firestore.collection(_collection).add(model.toMap());
+      await _clearCache(model.userId);
     } catch (e) {
       throw Exception('Erro ao adicionar transação');
     }
@@ -119,6 +202,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
               receiptUrl: transaction.receiptUrl,
             );
       await _firestore.collection(_collection).doc(transaction.id).update(model.toMap());
+      await _clearCache(model.userId);
     } catch (e) {
       throw Exception('Erro ao atualizar transação');
     }
@@ -127,7 +211,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<void> delete(String id) async {
     try {
+      final doc = await _firestore.collection(_collection).doc(id).get();
+      final data = doc.data();
+      final userId = data?['userId'];
       await _firestore.collection(_collection).doc(id).delete();
+      if (userId != null) await _clearCache(userId);
     } catch (e) {
       throw Exception('Erro ao deletar transação');
     }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
+import '../../../../core/utils/encryption_service.dart';
 import '../../domain/entities/transaction.dart';
 
 class TransactionModel extends Transaction {
@@ -17,7 +18,7 @@ class TransactionModel extends Transaction {
     return TransactionModel(
       id: id,
       userId: map['userId'] ?? '',
-      title: map['title'] ?? '',
+      title: EncryptionService().decrypt(map['title'] ?? ''),
       value: (map['value'] ?? 0).toDouble(),
       category: map['category'] ?? '',
       type: map['type'] == 'income' ? TransactionType.income : TransactionType.expense,
@@ -29,7 +30,7 @@ class TransactionModel extends Transaction {
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
-      'title': title,
+      'title': EncryptionService().encrypt(title),
       'value': value,
       'category': category,
       'type': type == TransactionType.income ? 'income' : 'expense',
