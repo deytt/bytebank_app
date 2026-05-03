@@ -149,7 +149,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ? txState.data
                     : null;
 
-            return Scaffold(
+            return PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, result) {
+                if (!didPop) {
+                  _confirmLogout(context);
+                }
+              },
+              child: Scaffold(
               backgroundColor: AppTheme.background,
               appBar: _buildAppBar(context, user),
               body: RefreshIndicator(
@@ -178,6 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   label: const Text('Transações'),
                 ),
               ),
+            ),
             );
           },
         );
