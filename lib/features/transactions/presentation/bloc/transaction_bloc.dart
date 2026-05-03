@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,7 +28,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   })  : _transactionService = transactionService ?? TransactionService(),
         _storageService = storageService ?? StorageService(),
         super(const TransactionInitial()) {
-    on<LoadTransactions>(_onLoadTransactions);
+    on<LoadTransactions>(_onLoadTransactions, transformer: restartable());
     on<LoadMoreTransactions>(_onLoadMoreTransactions);
     on<AddTransactionRequested>(_onAddTransaction);
     on<UpdateTransactionRequested>(_onUpdateTransaction);
@@ -72,12 +73,14 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       );
       final allTransactions = allResult['transactions'] as List<TransactionModel>;
 
+      if (emit.isDone) return;
       emit(TransactionLoaded(
         transactions: transactions,
         allTransactions: allTransactions,
         hasMore: hasMore,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(TransactionError(e.toString().replaceAll('Exception: ', '')));
     }
   }
@@ -265,8 +268,10 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
         hasMore: hasMore,
       );
 
+      if (emit.isDone) return;
       emit(TransactionActionSuccess(message: successMessage, data: loaded));
     } catch (e) {
+      if (emit.isDone) return;
       emit(TransactionError(e.toString().replaceAll('Exception: ', '')));
     }
   }
