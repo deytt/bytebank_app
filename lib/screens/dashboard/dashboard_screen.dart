@@ -13,7 +13,7 @@ import '../transactions/transaction_list_screen.dart';
 
 enum _ChartPeriod { total, last12Months, last3Months }
 
-enum _ChartType { line, bar }
+enum _ChartType { line, bar, pie }
 
 class _ServiceCardData {
   final IconData icon;
@@ -56,6 +56,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   late AnimationController _services1Controller;
   late AnimationController _services2Controller;
   late AnimationController _carouselController;
+
+  late PageController _chartPageController;
 
   late Animation<double> _headerFade;
   late Animation<Offset> _headerSlide;
@@ -205,6 +207,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       begin: const Offset(0.0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _carouselController, curve: Curves.easeOutCubic));
+
+    _chartPageController = PageController();
   }
 
   Future<void> _runAnimationSequence() async {
@@ -232,7 +236,28 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     _services1Controller.dispose();
     _services2Controller.dispose();
     _carouselController.dispose();
+    _chartPageController.dispose();
     super.dispose();
+  }
+
+  static const _pieColors = [
+    AppTheme.primaryLight,
+    AppTheme.success,
+    AppTheme.error,
+    Color(0xFF3B82F6),
+    Color(0xFFF59E0B),
+    AppTheme.textSecondary,
+  ];
+
+  String get _chartTitle {
+    switch (_selectedChartType) {
+      case _ChartType.line:
+        return 'Saldo Acumulado';
+      case _ChartType.bar:
+        return 'Receitas e Despesas';
+      case _ChartType.pie:
+        return 'Despesas por Categoria';
+    }
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
@@ -405,98 +430,106 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   Widget _buildChartCard(TransactionLoaded? loaded) {
     final transactions = loaded?.allTransactions ?? [];
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primary.withValues(alpha: 0.30), AppTheme.surface],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.15)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Evolução do Saldo', style: Theme.of(context).textTheme.headlineMedium),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                _chartTitle,
+                key: ValueKey(_chartTitle),
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ),
             const SizedBox(height: 16),
-            _buildChartTypeToggle(),
-            const SizedBox(height: 12),
             _buildPeriodSelector(),
             const SizedBox(height: 20),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.1, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
+            SizedBox(
+              height: 220,
               child: transactions.isEmpty
                   ? _buildEmptyChart()
-                  : SizedBox(
-                      key: ValueKey('${_selectedChartType.name}_${_selectedPeriod.name}'),
-                      height: 220,
-                      child: _selectedChartType == _ChartType.line
-                          ? _buildLineChart(transactions)
-                          : _buildBarChart(transactions),
+                  : PageView(
+                      controller: _chartPageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _selectedChartType = const [
+                            _ChartType.line,
+                            _ChartType.bar,
+                            _ChartType.pie,
+                          ][index];
+                        });
+                      },
+                      children: [
+                        _buildLineChart(transactions),
+                        _buildBarChart(transactions),
+                        _buildPieChart(transactions),
+                      ],
                     ),
             ),
             const SizedBox(height: 12),
-            _buildChartLegend(),
+            SizedBox(height: 44, child: _buildChartLegend(transactions)),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (i) {
+                final active =
+                    const [_ChartType.line, _ChartType.bar, _ChartType.pie][i] ==
+                    _selectedChartType;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    width: active ? 22 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? AppTheme.primaryLight
+                          : AppTheme.primaryLight.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildChartTypeToggle() {
-    return Row(
-      children: [
-        Expanded(
-          child: SegmentedButton<_ChartType>(
-            segments: const [
-              ButtonSegment(
-                value: _ChartType.line,
-                label: Text('Linha'),
-                icon: Icon(Icons.show_chart, size: 16),
-              ),
-              ButtonSegment(
-                value: _ChartType.bar,
-                label: Text('Barras'),
-                icon: Icon(Icons.bar_chart, size: 16),
-              ),
-            ],
-            selected: {_selectedChartType},
-            onSelectionChanged: (value) {
-              setState(() {
-                _selectedChartType = value.first;
-              });
-            },
-            style: ButtonStyle(textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12))),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPeriodSelector() {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: SegmentedButton<_ChartPeriod>(
-            segments: const [
-              ButtonSegment(value: _ChartPeriod.last3Months, label: Text('3 meses')),
-              ButtonSegment(value: _ChartPeriod.last12Months, label: Text('12 meses')),
-              ButtonSegment(value: _ChartPeriod.total, label: Text('Total')),
-            ],
-            selected: {_selectedPeriod},
-            onSelectionChanged: (value) {
-              setState(() {
-                _selectedPeriod = value.first;
-              });
-            },
-            style: ButtonStyle(textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 11))),
-          ),
+        _PeriodTag(
+          label: '3m',
+          selected: _selectedPeriod == _ChartPeriod.last3Months,
+          onTap: () => setState(() => _selectedPeriod = _ChartPeriod.last3Months),
+        ),
+        const SizedBox(width: 6),
+        _PeriodTag(
+          label: '12m',
+          selected: _selectedPeriod == _ChartPeriod.last12Months,
+          onTap: () => setState(() => _selectedPeriod = _ChartPeriod.last12Months),
+        ),
+        const SizedBox(width: 6),
+        _PeriodTag(
+          label: 'Total',
+          selected: _selectedPeriod == _ChartPeriod.total,
+          onTap: () => setState(() => _selectedPeriod = _ChartPeriod.total),
         ),
       ],
     );
@@ -568,6 +601,41 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       result.add(entry.value.copyWith(balance: cumulativeBalance));
     }
 
+    return result;
+  }
+
+  List<TransactionModel> _filterByPeriod(List<TransactionModel> transactions) {
+    if (_selectedPeriod == _ChartPeriod.total) return List.from(transactions);
+    final now = DateTime.now();
+    final startDate = _selectedPeriod == _ChartPeriod.last3Months
+        ? DateTime(now.year, now.month - 2, 1)
+        : DateTime(now.year, now.month - 11, 1);
+    return transactions.where((t) => !t.date.isBefore(startDate)).toList();
+  }
+
+  Map<String, double> _getPieChartData(List<TransactionModel> transactions) {
+    final expenses = _filterByPeriod(
+      transactions,
+    ).where((t) => t.type == TransactionType.expense).toList();
+
+    final Map<String, double> categoryTotals = {};
+    for (final t in expenses) {
+      final cat = t.category.trim().isEmpty ? 'Outros' : t.category;
+      categoryTotals[cat] = (categoryTotals[cat] ?? 0) + t.value;
+    }
+
+    final sorted = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    final Map<String, double> result = {};
+    double others = 0;
+    for (int i = 0; i < sorted.length; i++) {
+      if (i < 5) {
+        result[sorted[i].key] = sorted[i].value;
+      } else {
+        others += sorted[i].value;
+      }
+    }
+    if (others > 0) result['Outros'] = (result['Outros'] ?? 0) + others;
     return result;
   }
 
@@ -663,6 +731,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
             getTooltipItems: (spots) {
               return spots.map((spot) {
                 final idx = spot.x.toInt();
@@ -759,6 +829,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         }).toList(),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final d = data[group.x];
               final label = rodIndex == 0 ? 'Receita' : 'Despesa';
@@ -774,7 +846,110 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildChartLegend() {
+  Widget _buildPieChart(List<TransactionModel> transactions) {
+    final data = _getPieChartData(transactions);
+    if (data.isEmpty) return _buildEmptyChart();
+
+    final total = data.values.fold(0.0, (sum, v) => sum + v);
+    final entries = data.entries.toList();
+
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        int touchedIndex = -1;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            PieChart(
+              PieChartData(
+                centerSpaceRadius: 54,
+                sectionsSpace: 2,
+                pieTouchData: PieTouchData(
+                  touchCallback: (event, response) {
+                    setLocalState(() {
+                      if (!event.isInterestedForInteractions ||
+                          response == null ||
+                          response.touchedSection == null) {
+                        touchedIndex = -1;
+                        return;
+                      }
+                      touchedIndex = response.touchedSection!.touchedSectionIndex;
+                    });
+                  },
+                ),
+                sections: entries.asMap().entries.map((e) {
+                  final i = e.key;
+                  final entry = e.value;
+                  final color = _pieColors[i % _pieColors.length];
+                  final isTouched = i == touchedIndex;
+                  final pct = total > 0 ? (entry.value / total * 100) : 0.0;
+                  return PieChartSectionData(
+                    color: color,
+                    value: entry.value,
+                    title: isTouched ? '${pct.toStringAsFixed(1)}%' : '',
+                    radius: isTouched ? 65 : 56,
+                    titleStyle: const TextStyle(
+                      color: AppTheme.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                }).toList(),
+              ),
+              duration: const Duration(milliseconds: 300),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Total', style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  Formatters.formatCurrency(total),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildChartLegend(List<TransactionModel> transactions) {
+    if (_selectedChartType == _ChartType.pie) {
+      final data = _getPieChartData(transactions);
+      if (data.isEmpty) return const SizedBox.shrink();
+      final entries = data.entries.toList();
+      return Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        alignment: WrapAlignment.center,
+        children: entries.asMap().entries.map((e) {
+          final color = _pieColors[e.key % _pieColors.length];
+          return SizedBox(
+            width: 90,
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    e.value.key,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1086,7 +1261,7 @@ class _CarouselSectionState extends State<_CarouselSection> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 Text(
                                   item.title,
@@ -1103,7 +1278,7 @@ class _CarouselSectionState extends State<_CarouselSection> {
                                     color: AppTheme.white.withValues(alpha: 0.85),
                                     fontSize: 13,
                                   ),
-                                  maxLines: 3,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
@@ -1146,6 +1321,41 @@ class _CarouselSectionState extends State<_CarouselSection> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PeriodTag extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PeriodTag({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primaryLight.withValues(alpha: 0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppTheme.primaryLight : AppTheme.textSecondary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? AppTheme.primaryLight : AppTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 }
