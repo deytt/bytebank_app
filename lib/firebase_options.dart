@@ -57,7 +57,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1093070321011',
     projectId: 'bytebank-2778e',
     storageBucket: 'bytebank-2778e.firebasestorage.app',
-    iosBundleId: 'com.example.bytebankApp',
+    iosBundleId: 'com.postech.bytebankapp',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
