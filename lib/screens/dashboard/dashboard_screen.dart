@@ -76,16 +76,12 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
 
   static const _dailyServices = [
     _ServiceCardData(icon: Icons.account_balance, label: 'Meus bancos', color: AppTheme.primary),
-    _ServiceCardData(
-      icon: Icons.smartphone,
-      label: 'Vender pelo celular',
-      color: AppTheme.primaryLight,
-    ),
+    _ServiceCardData(icon: Icons.smartphone, label: 'Token', color: AppTheme.primaryLight),
     _ServiceCardData(icon: Icons.credit_card, label: 'Limite de crédito', color: AppTheme.success),
     _ServiceCardData(icon: Icons.calendar_today, label: 'Agendamentos', color: AppTheme.primary),
     _ServiceCardData(
       icon: Icons.receipt_long,
-      label: 'Buscador de boletos - DDA',
+      label: 'Boletos - DDA',
       color: AppTheme.primaryLight,
     ),
     _ServiceCardData(
@@ -96,11 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   ];
 
   static const _financialServices = [
-    _ServiceCardData(
-      icon: Icons.handshake,
-      label: 'Renegociação de dívidas',
-      color: AppTheme.error,
-    ),
+    _ServiceCardData(icon: Icons.handshake, label: 'Renegociação', color: AppTheme.error),
     _ServiceCardData(icon: Icons.group, label: 'Consórcio', color: AppTheme.primaryLight),
     _ServiceCardData(icon: Icons.trending_up, label: 'Capitalização', color: AppTheme.success),
     _ServiceCardData(icon: Icons.currency_exchange, label: 'Câmbio', color: AppTheme.primary),
@@ -1360,48 +1352,100 @@ class _PeriodTag extends StatelessWidget {
   }
 }
 
-class _BalanceCard extends StatelessWidget {
+class _BalanceCard extends StatefulWidget {
   final TransactionLoaded? loaded;
 
   const _BalanceCard({required this.loaded});
 
   @override
+  State<_BalanceCard> createState() => _BalanceCardState();
+}
+
+class _BalanceCardState extends State<_BalanceCard> {
+  bool _obscured = false;
+
+  @override
   Widget build(BuildContext context) {
-    final balance = loaded?.balance ?? 0.0;
-    final income = loaded?.totalIncome ?? 0.0;
-    final expense = loaded?.totalExpense ?? 0.0;
+    final balance = widget.loaded?.balance ?? 0.0;
+    final income = widget.loaded?.totalIncome ?? 0.0;
+    final expense = widget.loaded?.totalExpense ?? 0.0;
     final isPositive = balance >= 0;
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [const Color(0xFF0D3B5E).withValues(alpha: 0.55), AppTheme.surface],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.20)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Saldo Atual', style: Theme.of(context).textTheme.labelMedium),
-            const SizedBox(height: 8),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 300),
-              style: Theme.of(context).textTheme.displayLarge!.copyWith(
-                color: isPositive ? AppTheme.success : AppTheme.error,
-              ),
-              child: Text(Formatters.formatCurrency(balance)),
-            ),
-            const SizedBox(height: 24),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Text(
+                  'Saldo atual',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary, fontSize: 13),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => setState(() => _obscured = !_obscured),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      _obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      key: ValueKey(_obscured),
+                      color: AppTheme.textSecondary,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            _obscured
+                ? Text(
+                    '••••••',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 4,
+                    ),
+                  )
+                : AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
+                    style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: isPositive ? AppTheme.success : AppTheme.error,
+                    ),
+                    child: Text(Formatters.formatCurrency(balance)),
+                  ),
+            const Divider(height: 28, thickness: 0.5),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _BalanceItem(
                   label: 'Receitas',
                   value: income,
                   color: AppTheme.success,
-                  icon: Icons.arrow_upward,
+                  icon: Icons.arrow_upward_rounded,
+                  obscured: _obscured,
                 ),
-                Container(height: 40, width: 1, color: AppTheme.surface),
                 _BalanceItem(
                   label: 'Despesas',
                   value: expense,
                   color: AppTheme.error,
-                  icon: Icons.arrow_downward,
+                  icon: Icons.arrow_downward_rounded,
+                  obscured: _obscured,
                 ),
               ],
             ),
@@ -1417,32 +1461,43 @@ class _BalanceItem extends StatelessWidget {
   final double value;
   final Color color;
   final IconData icon;
+  final bool obscured;
 
   const _BalanceItem({
     required this.label,
     required this.value,
     required this.color,
     required this.icon,
+    required this.obscured,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: Icon(icon, color: color, size: 16),
         ),
-        const SizedBox(height: 8),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 4),
-        Text(
-          Formatters.formatCurrency(value),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: color),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+            Text(
+              obscured ? '•••••' : Formatters.formatCurrency(value),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ],
     );
