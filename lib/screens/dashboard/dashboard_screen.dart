@@ -103,6 +103,33 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           'Rendimento de até 120% do CDI com liquidez diária. Comece com qualquer valor e veja seu dinheiro crescer.',
       offerCta: 'Começar a investir',
     ),
+    StoryItemData(
+      label: 'Tag',
+      icon: Icons.directions_car,
+      gradientColors: [Color(0xFF0C4A6E), Color(0xFF0284C7)],
+      offerTitle: 'Tag de pedágio',
+      offerSubtitle:
+          'Passe sem parar em pedágios e estacionamentos em todo o Brasil. Peça a sua Tag gratuita agora.',
+      offerCta: 'Pedir minha Tag',
+    ),
+    StoryItemData(
+      label: 'Livelo',
+      icon: Icons.star_rounded,
+      gradientColors: [Color(0xFF7C2D12), Color(0xFFEA580C)],
+      offerTitle: 'Pontos Livelo',
+      offerSubtitle:
+          'Acumule pontos em cada compra e troque por passagens, produtos e experiências incríveis.',
+      offerCta: 'Ver meus pontos',
+    ),
+    StoryItemData(
+      label: 'Empresa',
+      icon: Icons.business_center,
+      gradientColors: [AppTheme.gradientBlueDark, AppTheme.gradientBlue],
+      offerTitle: 'Conta PJ gratuita',
+      offerSubtitle:
+          'Conta para sua empresa sem tarifas de manutenção, com Pix ilimitado e gestão financeira integrada.',
+      offerCta: 'Abrir conta PJ',
+    ),
   ];
 
   @override
