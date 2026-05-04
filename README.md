@@ -46,8 +46,7 @@ Domain Layer
 
 Data Layer
 ├── Models (DTOs com serialização Firestore + criptografia)
-├── Repository implementations (Firestore, Hive cache)
-└── Injeção de dependências (get_it)
+└── Repository implementations (Firestore, Hive cache)
 
 Presentation Layer
 ├── BLoC (estado + eventos + transições)
