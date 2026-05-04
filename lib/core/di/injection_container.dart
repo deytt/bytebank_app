@@ -17,18 +17,15 @@ import '../../features/transactions/domain/usecases/delete_transaction_usecase.d
 final getIt = GetIt.instance;
 
 void setup() {
-  // Repositories — lazy singletons (instantiated once on first use)
   getIt.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl());
   getIt.registerLazySingleton<TransactionRepository>(() => TransactionRepositoryImpl());
 
-  // Auth use cases
   getIt.registerFactory(() => WatchAuthStateUseCase(getIt()));
   getIt.registerFactory(() => SignInUseCase(getIt()));
   getIt.registerFactory(() => SignUpUseCase(getIt()));
   getIt.registerFactory(() => SignInWithGoogleUseCase(getIt()));
   getIt.registerFactory(() => SignOutUseCase(getIt()));
 
-  // Transaction use cases
   getIt.registerFactory(() => GetTransactionsUseCase(getIt()));
   getIt.registerFactory(() => GetTransactionAggregatesUseCase(getIt()));
   getIt.registerFactory(() => AddTransactionUseCase(getIt()));

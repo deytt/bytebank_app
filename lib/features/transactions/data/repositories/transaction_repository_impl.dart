@@ -31,7 +31,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
   /// Builds a TransactionModel from a cache map.
   TransactionModel _fromCacheMap(Map map) {
     final raw = Map<String, dynamic>.from(map);
-    // Restore the date from millisecondsSinceEpoch
     final dateMs = raw['date'] as int;
     return TransactionModel(
       id: raw['id'] as String?,
@@ -77,9 +76,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
     try {
       final box = await _openBox(userId);
       await box.delete('transactions');
-    } catch (_) {
-      // Ignore cache errors
-    }
+    } catch (_) {}
   }
 
   @override
