@@ -54,9 +54,9 @@ class DashboardStoriesSection extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           item.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.of(context).textPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,
@@ -79,7 +79,7 @@ class DashboardStoriesSection extends StatelessWidget {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: AppTheme.black,
+      barrierColor: AppTheme.of(context).black,
       transitionDuration: const Duration(milliseconds: 300),
       transitionBuilder: (ctx, anim, _, child) {
         return FadeTransition(
@@ -104,6 +104,7 @@ class _StoryAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return Container(
       width: 60,
       height: 60,
@@ -117,7 +118,7 @@ class _StoryAvatar extends StatelessWidget {
         ),
       ),
       child: Container(
-        decoration: const BoxDecoration(shape: BoxShape.circle, color: AppTheme.background),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: t.background),
         padding: const EdgeInsets.all(2),
         child: Container(
           decoration: BoxDecoration(
@@ -198,6 +199,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
   Widget build(BuildContext context) {
     final item = widget.items[_currentIndex];
     final size = MediaQuery.of(context).size;
+    final t = AppTheme.of(context);
 
     return Material(
       color: Colors.transparent,
@@ -211,7 +213,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
             colors: [
               item.gradientColors[0],
               item.gradientColors[1],
-              AppTheme.black.withValues(alpha: 0.6),
+              t.black.withValues(alpha: 0.6),
             ],
             stops: const [0.0, 0.55, 1.0],
           ),
@@ -263,9 +265,8 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
                                   return LinearProgressIndicator(
                                     value: value,
                                     minHeight: 3,
-                                    backgroundColor: AppTheme.white.withValues(alpha: 0.3),
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(AppTheme.white),
+                                    backgroundColor: t.white.withValues(alpha: 0.3),
+                                    valueColor: AlwaysStoppedAnimation<Color>(t.white),
                                   );
                                 },
                               ),
@@ -281,7 +282,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
                       padding: const EdgeInsets.only(right: 8, top: 4),
                       child: IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close, color: AppTheme.white, size: 28),
+                        icon: Icon(Icons.close, color: t.white, size: 28),
                       ),
                     ),
                   ),
@@ -294,16 +295,16 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppTheme.white.withValues(alpha: 0.15),
+                            color: t.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Icon(item.icon, color: AppTheme.white, size: 48),
+                          child: Icon(item.icon, color: t.white, size: 48),
                         ),
                         const SizedBox(height: 20),
                         Text(
                           item.offerTitle,
-                          style: const TextStyle(
-                            color: AppTheme.white,
+                          style: TextStyle(
+                            color: t.white,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             height: 1.2,
@@ -313,7 +314,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
                         Text(
                           item.offerSubtitle,
                           style: TextStyle(
-                            color: AppTheme.white.withValues(alpha: 0.88),
+                            color: t.white.withValues(alpha: 0.88),
                             fontSize: 15,
                             height: 1.5,
                           ),
@@ -324,7 +325,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
                           child: FilledButton(
                             onPressed: () => Navigator.of(context).pop(),
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.white,
+                              backgroundColor: t.white,
                               foregroundColor: item.gradientColors[0],
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
@@ -345,7 +346,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
                             child: Text(
                               'Agora não',
                               style: TextStyle(
-                                color: AppTheme.white.withValues(alpha: 0.7),
+                                color: t.white.withValues(alpha: 0.7),
                                 fontSize: 14,
                               ),
                             ),

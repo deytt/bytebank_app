@@ -23,14 +23,16 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
   ChartType _selectedChartType = ChartType.line;
   late PageController _pageController;
 
-  static const _pieColors = [
-    AppTheme.primaryLight,
-    AppTheme.success,
-    AppTheme.error,
-    AppTheme.chartBlue,
-    AppTheme.chartAmber,
-    AppTheme.textSecondary,
-  ];
+  List<Color> _piePalette(AppThemeTokens t) {
+    return [
+      t.primaryLight,
+      t.success,
+      t.error,
+      t.chartBlue,
+      t.chartAmber,
+      t.textSecondary,
+    ];
+  }
 
   @override
   void initState() {
@@ -58,16 +60,17 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
   @override
   Widget build(BuildContext context) {
     final transactions = widget.transactions;
+    final t = AppTheme.of(context);
 
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.primary.withValues(alpha: 0.30), AppTheme.surface],
+          colors: [t.primary.withValues(alpha: 0.30), t.surface],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.15)),
+        border: Border.all(color: t.primaryLight.withValues(alpha: 0.15)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -88,7 +91,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
             SizedBox(
               height: 220,
               child: transactions.isEmpty
-                  ? _buildEmptyChart()
+                  ? _buildEmptyChart(context)
                   : PageView(
                       controller: _pageController,
                       onPageChanged: (index) {
@@ -125,8 +128,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                     height: 8,
                     decoration: BoxDecoration(
                       color: active
-                          ? AppTheme.primaryLight
-                          : AppTheme.primaryLight.withValues(alpha: 0.25),
+                          ? t.primaryLight
+                          : t.primaryLight.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -164,16 +167,17 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     );
   }
 
-  Widget _buildEmptyChart() {
-    return const SizedBox(
+  Widget _buildEmptyChart(BuildContext context) {
+    final t = AppTheme.of(context);
+    return SizedBox(
       height: 220,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.show_chart, size: 48, color: AppTheme.textSecondary),
-            SizedBox(height: 8),
-            Text('Nenhuma transação ainda', style: TextStyle(color: AppTheme.textSecondary)),
+            Icon(Icons.show_chart, size: 48, color: t.textSecondary),
+            const SizedBox(height: 8),
+            Text('Nenhuma transação ainda', style: TextStyle(color: t.textSecondary)),
           ],
         ),
       ),
@@ -267,8 +271,9 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
   }
 
   Widget _buildLineChart(List<TransactionModel> transactions) {
+    final t = AppTheme.of(context);
     final data = _getChartData(transactions);
-    if (data.isEmpty) return _buildEmptyChart();
+    if (data.isEmpty) return _buildEmptyChart(context);
 
     final spots = data.asMap().entries.map((e) {
       return FlSpot(e.key.toDouble(), e.value.balance);
@@ -286,7 +291,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: AppTheme.surface.withValues(alpha: 0.5), strokeWidth: 1),
+              FlLine(color: t.surface.withValues(alpha: 0.5), strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(
@@ -295,7 +300,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
               reservedSize: 52,
               getTitlesWidget: (value, meta) => Text(
                 _formatChartValue(value),
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 9),
+                style: TextStyle(color: t.textSecondary, fontSize: 9),
               ),
             ),
           ),
@@ -312,7 +317,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     _monthLabel(d.month),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 9),
+                    style: TextStyle(color: t.textSecondary, fontSize: 9),
                   ),
                 );
               },
@@ -327,16 +332,16 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.3,
-            color: AppTheme.primaryLight,
+            color: t.primaryLight,
             barWidth: 2.5,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: spots.length <= 6,
               getDotPainter: (spot, xPercentage, bar, index) => FlDotCirclePainter(
                 radius: 4,
-                color: AppTheme.primaryLight,
+                color: t.primaryLight,
                 strokeWidth: 2,
-                strokeColor: AppTheme.background,
+                strokeColor: t.background,
               ),
             ),
             belowBarData: BarAreaData(
@@ -345,8 +350,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppTheme.primaryLight.withValues(alpha: 0.3),
-                  AppTheme.primaryLight.withValues(alpha: 0.0),
+                  t.primaryLight.withValues(alpha: 0.3),
+                  t.primaryLight.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -363,8 +368,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                 final d = data[idx];
                 return LineTooltipItem(
                   '${_monthLabel(d.month)}/${d.year}\n${Formatters.formatCurrency(spot.y)}',
-                  const TextStyle(
-                    color: AppTheme.white,
+                  TextStyle(
+                    color: t.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -379,8 +384,9 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
   }
 
   Widget _buildBarChart(List<TransactionModel> transactions) {
+    final t = AppTheme.of(context);
     final data = _getChartData(transactions);
-    if (data.isEmpty) return _buildEmptyChart();
+    if (data.isEmpty) return _buildEmptyChart(context);
 
     final maxY = data
         .map((d) => d.income > d.expense ? d.income : d.expense)
@@ -393,7 +399,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: AppTheme.surface.withValues(alpha: 0.5), strokeWidth: 1),
+              FlLine(color: t.surface.withValues(alpha: 0.5), strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(
@@ -402,7 +408,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
               reservedSize: 52,
               getTitlesWidget: (value, meta) => Text(
                 _formatChartValue(value),
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 9),
+                style: TextStyle(color: t.textSecondary, fontSize: 9),
               ),
             ),
           ),
@@ -418,7 +424,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     _monthLabel(d.month),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 9),
+                    style: TextStyle(color: t.textSecondary, fontSize: 9),
                   ),
                 );
               },
@@ -437,13 +443,13 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
             barRods: [
               BarChartRodData(
                 toY: d.income,
-                color: AppTheme.success.withValues(alpha: 0.85),
+                color: t.success.withValues(alpha: 0.85),
                 width: 10,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
               ),
               BarChartRodData(
                 toY: d.expense,
-                color: AppTheme.error.withValues(alpha: 0.85),
+                color: t.error.withValues(alpha: 0.85),
                 width: 10,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
               ),
@@ -459,8 +465,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
               final label = rodIndex == 0 ? 'Receita' : 'Despesa';
               return BarTooltipItem(
                 '${_monthLabel(d.month)}/${d.year}\n$label: ${Formatters.formatCurrency(rod.toY)}',
-                const TextStyle(
-                  color: AppTheme.white,
+                TextStyle(
+                  color: t.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -475,13 +481,15 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
 
   Widget _buildPieChart(List<TransactionModel> transactions) {
     final data = _getPieChartData(transactions);
-    if (data.isEmpty) return _buildEmptyChart();
+    if (data.isEmpty) return _buildEmptyChart(context);
 
     final total = data.values.fold(0.0, (sum, v) => sum + v);
     final entries = data.entries.toList();
 
     return StatefulBuilder(
       builder: (context, setLocalState) {
+        final t = AppTheme.of(context);
+        final palette = _piePalette(t);
         int touchedIndex = -1;
         return Stack(
           alignment: Alignment.center,
@@ -506,7 +514,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                 sections: entries.asMap().entries.map((e) {
                   final i = e.key;
                   final entry = e.value;
-                  final color = _pieColors[i % _pieColors.length];
+                  final color = palette[i % palette.length];
                   final isTouched = i == touchedIndex;
                   final pct = total > 0 ? (entry.value / total * 100) : 0.0;
                   return PieChartSectionData(
@@ -514,8 +522,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
                     value: entry.value,
                     title: isTouched ? '${pct.toStringAsFixed(1)}%' : '',
                     radius: isTouched ? 65 : 56,
-                    titleStyle: const TextStyle(
-                      color: AppTheme.white,
+                    titleStyle: TextStyle(
+                      color: t.white,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -544,6 +552,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
   }
 
   Widget _buildChartLegend(List<TransactionModel> transactions) {
+    final t = AppTheme.of(context);
+    final palette = _piePalette(t);
     if (_selectedChartType == ChartType.pie) {
       final data = _getPieChartData(transactions);
       if (data.isEmpty) return const SizedBox.shrink();
@@ -553,7 +563,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
         runSpacing: 4,
         alignment: WrapAlignment.center,
         children: entries.asMap().entries.map((e) {
-          final color = _pieColors[e.key % _pieColors.length];
+          final color = palette[e.key % palette.length];
           return SizedBox(
             width: 90,
             child: Row(
@@ -585,11 +595,11 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (_selectedChartType == ChartType.bar) ...[
-          _LegendItem(color: AppTheme.success, label: 'Receitas'),
+          _LegendItem(color: t.success, label: 'Receitas'),
           const SizedBox(width: 16),
-          _LegendItem(color: AppTheme.error, label: 'Despesas'),
+          _LegendItem(color: t.error, label: 'Despesas'),
         ] else ...[
-          _LegendItem(color: AppTheme.primaryLight, label: 'Saldo acumulado'),
+          _LegendItem(color: t.primaryLight, label: 'Saldo acumulado'),
         ],
       ],
     );
@@ -617,6 +627,7 @@ class _PeriodTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -624,18 +635,18 @@ class _PeriodTag extends StatelessWidget {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryLight.withValues(alpha: 0.2) : Colors.transparent,
+          color: selected ? t.primaryLight.withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
-                ? AppTheme.primaryLight
-                : AppTheme.textSecondary.withValues(alpha: 0.3),
+                ? t.primaryLight
+                : t.textSecondary.withValues(alpha: 0.3),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? AppTheme.primaryLight : AppTheme.textSecondary,
+            color: selected ? t.primaryLight : t.textSecondary,
             fontSize: 11,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
           ),

@@ -17,7 +17,9 @@ class CarouselItemData {
 }
 
 class DashboardCarouselSection extends StatefulWidget {
-  const DashboardCarouselSection({super.key});
+  final List<CarouselItemData> items;
+
+  const DashboardCarouselSection({super.key, required this.items});
 
   @override
   State<DashboardCarouselSection> createState() => _DashboardCarouselSectionState();
@@ -27,33 +29,6 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
   late final PageController _pageController;
   int _currentPage = 0;
   Timer? _timer;
-
-  static const _items = [
-    CarouselItemData(
-      title: 'Cashback especial',
-      subtitle: 'Ganhe até 5% de volta em compras online selecionadas',
-      icon: Icons.card_giftcard,
-      gradientColors: [AppTheme.primary, AppTheme.primaryLight],
-    ),
-    CarouselItemData(
-      title: 'Empréstimo pessoal',
-      subtitle: 'Taxas a partir de 1,29% a.m. com aprovação em minutos',
-      icon: Icons.attach_money,
-      gradientColors: [AppTheme.gradientBlueDark, AppTheme.gradientBlue],
-    ),
-    CarouselItemData(
-      title: 'Conta digital grátis',
-      subtitle: 'Sem tarifas de manutenção e com rendimento automático',
-      icon: Icons.account_balance_wallet,
-      gradientColors: [AppTheme.gradientGreenDark, AppTheme.gradientGreen],
-    ),
-    CarouselItemData(
-      title: 'Invista agora',
-      subtitle: 'Rendimento de até 120% do CDI com liquidez diária',
-      icon: Icons.trending_up,
-      gradientColors: [AppTheme.gradientAmberDark, AppTheme.gradientAmber],
-    ),
-  ];
 
   @override
   void initState() {
@@ -65,7 +40,7 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
   void _startAutoAdvance() {
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted) return;
-      final next = (_currentPage + 1) % _items.length;
+      final next = (_currentPage + 1) % widget.items.length;
       _pageController.animateToPage(
         next,
         duration: const Duration(milliseconds: 500),
@@ -96,9 +71,10 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (index) => setState(() => _currentPage = index),
-            itemCount: _items.length,
+            itemCount: widget.items.length,
             itemBuilder: (context, index) {
-              final item = _items[index];
+              final item = widget.items[index];
+              final t = AppTheme.of(context);
               return AnimatedBuilder(
                 animation: _pageController,
                 builder: (context, child) {
@@ -131,8 +107,8 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
                               children: [
                                 Text(
                                   item.title,
-                                  style: const TextStyle(
-                                    color: AppTheme.white,
+                                  style: TextStyle(
+                                    color: t.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -141,7 +117,7 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
                                 Text(
                                   item.subtitle,
                                   style: TextStyle(
-                                    color: AppTheme.white.withValues(alpha: 0.85),
+                                    color: t.white.withValues(alpha: 0.85),
                                     fontSize: 13,
                                   ),
                                   maxLines: 2,
@@ -154,10 +130,10 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: AppTheme.white.withValues(alpha: 0.15),
+                              color: t.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: Icon(item.icon, color: AppTheme.white, size: 32),
+                            child: Icon(item.icon, color: t.white, size: 32),
                           ),
                         ],
                       ),
@@ -172,18 +148,21 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            _items.length,
-            (index) => AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: _currentPage == index ? 22 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: _currentPage == index ? AppTheme.primaryLight : AppTheme.surface,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            widget.items.length,
+            (index) {
+              final t = AppTheme.of(context);
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _currentPage == index ? 22 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _currentPage == index ? t.primaryLight : t.surface,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            },
           ),
         ),
       ],

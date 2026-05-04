@@ -123,15 +123,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             ),
           );
         } else if (state is TransactionActionFailure) {
+          final te = AppTheme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: AppTheme.error,
+              backgroundColor: te.error,
             ),
           );
         }
       },
       builder: (context, state) {
+        final t = AppTheme.of(context);
         final loaded = state is TransactionLoaded
             ? state
             : state is TransactionActionSuccess
@@ -146,16 +148,16 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         final hasMore = loaded?.hasMore ?? false;
 
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: t.background,
           appBar: AppBar(
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
             backgroundColor: Colors.transparent,
             flexibleSpace: Container(
-              decoration: BoxDecoration(gradient: AppTheme.transactionAppBarGradient),
+              decoration: BoxDecoration(gradient: t.transactionAppBarGradient),
             ),
-            foregroundColor: AppTheme.textPrimary,
+            foregroundColor: t.textPrimary,
             title: const Text('Transações'),
             actions: [
               IconButton(
@@ -166,27 +168,27 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
           ),
           body: Container(
             width: double.infinity,
-            decoration: BoxDecoration(gradient: AppTheme.transactionScreenBackgroundGradient),
+            decoration: BoxDecoration(gradient: t.transactionScreenBackgroundGradient),
             child: RefreshIndicator(
-              color: AppTheme.primaryLight,
+              color: t.primaryLight,
               onRefresh: () async => _loadInitial(),
               child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                     child: Container(
-                      decoration: AppTheme.searchFieldShellDecoration,
+                      decoration: t.searchFieldShellDecoration,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: TextField(
                         controller: _searchController,
                         style: Theme.of(context).textTheme.bodyLarge,
                         decoration: InputDecoration(
                           hintText: 'Buscar por título (mín. 3 caracteres)...',
-                          hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.85)),
-                          prefixIcon: Icon(Icons.search_rounded, color: AppTheme.textSecondary.withValues(alpha: 0.9)),
+                          hintStyle: TextStyle(color: t.textSecondary.withValues(alpha: 0.85)),
+                          prefixIcon: Icon(Icons.search_rounded, color: t.textSecondary.withValues(alpha: 0.9)),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: Icon(Icons.close_rounded, color: AppTheme.textSecondary.withValues(alpha: 0.9)),
+                                  icon: Icon(Icons.close_rounded, color: t.textSecondary.withValues(alpha: 0.9)),
                                   onPressed: () {
                                     _searchController.clear();
                                     _applyFilters();
@@ -199,7 +201,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: AppTheme.primaryLight.withValues(alpha: 0.45)),
+                            borderSide: BorderSide(color: t.primaryLight.withValues(alpha: 0.45)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                           helperText: _searchController.text.isNotEmpty &&
@@ -222,7 +224,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 if (_hasActiveFilters) _buildActiveFiltersRow(),
                 Expanded(
                   child: isLoading && transactions.isEmpty
-                      ? Center(child: CircularProgressIndicator(color: AppTheme.primaryLight))
+                      ? Center(child: CircularProgressIndicator(color: t.primaryLight))
                       : transactions.isEmpty
                           ? _buildEmpty()
                           : ListView.builder(
@@ -280,7 +282,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 MaterialPageRoute(builder: (_) => const TransactionFormScreen()),
               );
             },
-            backgroundColor: AppTheme.primary,
+            backgroundColor: t.primary,
             icon: const Icon(Icons.add_rounded),
             label: const Text('Nova'),
           ),
@@ -290,6 +292,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   }
 
   Widget _buildActiveFiltersRow() {
+    final t = AppTheme.of(context);
     return SizedBox(
       height: 48,
       child: ListView(
@@ -338,7 +341,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             ),
           TextButton.icon(
             onPressed: _clearFilters,
-            style: TextButton.styleFrom(foregroundColor: AppTheme.primaryLight),
+            style: TextButton.styleFrom(foregroundColor: t.primaryLight),
             icon: const Icon(Icons.clear_all_rounded, size: 18),
             label: const Text('Limpar tudo'),
           ),
@@ -348,16 +351,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   }
 
   Widget _buildEmpty() {
+    final t = AppTheme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_rounded, size: 56, color: AppTheme.textSecondary.withValues(alpha: 0.65)),
+          Icon(Icons.receipt_long_rounded, size: 56, color: t.textSecondary.withValues(alpha: 0.65)),
           const SizedBox(height: 12),
           Text(
             'Nenhuma transação encontrada',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
+                  color: t.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
           ),
@@ -369,21 +373,27 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   Future<void> _confirmDelete(BuildContext context, TransactionModel transaction) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar exclusão'),
-        content: const Text('Deseja realmente excluir esta transação?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final td = AppTheme.of(ctx);
+        return AlertDialog(
+          title: const Text('Confirmar exclusão'),
+          content: const Text('Deseja realmente excluir esta transação?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: td.error),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm == true && context.mounted) {
@@ -401,8 +411,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+      builder: (context) {
+        final td = AppTheme.of(context);
+        return AlertDialog(
+        backgroundColor: td.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Filtros'),
         content: StatefulBuilder(
@@ -524,7 +536,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -540,7 +555,8 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             child: const Text('Aplicar'),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 }
@@ -553,14 +569,15 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Chip(
         label: Text(label, style: Theme.of(context).textTheme.bodySmall),
-        deleteIcon: Icon(Icons.close_rounded, size: 16, color: AppTheme.textSecondary.withValues(alpha: 0.95)),
+        deleteIcon: Icon(Icons.close_rounded, size: 16, color: t.textSecondary.withValues(alpha: 0.95)),
         onDeleted: onDeleted,
-        backgroundColor: AppTheme.surface.withValues(alpha: 0.92),
-        side: BorderSide(color: AppTheme.gradientBlue.withValues(alpha: 0.28)),
+        backgroundColor: t.surface.withValues(alpha: 0.92),
+        side: BorderSide(color: t.gradientBlue.withValues(alpha: 0.28)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.only(left: 8, right: 4),

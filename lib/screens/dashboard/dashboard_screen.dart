@@ -15,7 +15,9 @@ import 'widgets/stories_section.dart';
 import 'widgets/user_account_modal.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback onToggleThemeMode;
+
+  const DashboardScreen({super.key, required this.onToggleThemeMode});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -40,97 +42,132 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   late Animation<double> _carouselFade;
   late Animation<Offset> _carouselSlide;
 
-  static const _dailyServices = [
-    ServiceCardData(icon: Icons.account_balance, label: 'Meus bancos', color: AppTheme.primary),
-    ServiceCardData(icon: Icons.smartphone, label: 'Token', color: AppTheme.primaryLight),
-    ServiceCardData(icon: Icons.credit_card, label: 'Limite de crédito', color: AppTheme.success),
-    ServiceCardData(icon: Icons.calendar_today, label: 'Agendamentos', color: AppTheme.primary),
-    ServiceCardData(icon: Icons.receipt_long, label: 'Boletos - DDA', color: AppTheme.primaryLight),
-    ServiceCardData(
-      icon: Icons.arrow_forward_ios,
-      label: 'Ver Mais',
-      color: AppTheme.textSecondary,
-    ),
-  ];
+  List<ServiceCardData> _dailyServices(AppThemeTokens t) {
+    return [
+      ServiceCardData(icon: Icons.account_balance, label: 'Meus bancos', color: t.primary),
+      ServiceCardData(icon: Icons.smartphone, label: 'Token', color: t.primaryLight),
+      ServiceCardData(icon: Icons.credit_card, label: 'Limite de crédito', color: t.success),
+      ServiceCardData(icon: Icons.calendar_today, label: 'Agendamentos', color: t.primary),
+      ServiceCardData(icon: Icons.receipt_long, label: 'Boletos - DDA', color: t.primaryLight),
+      ServiceCardData(
+        icon: Icons.arrow_forward_ios,
+        label: 'Ver Mais',
+        color: t.textSecondary,
+      ),
+    ];
+  }
 
-  static const _financialServices = [
-    ServiceCardData(icon: Icons.handshake, label: 'Renegociação', color: AppTheme.error),
-    ServiceCardData(icon: Icons.group, label: 'Consórcio', color: AppTheme.primaryLight),
-    ServiceCardData(icon: Icons.trending_up, label: 'Capitalização', color: AppTheme.success),
-    ServiceCardData(icon: Icons.currency_exchange, label: 'Câmbio', color: AppTheme.primary),
-    ServiceCardData(icon: Icons.security, label: 'Seguros', color: AppTheme.primaryLight),
-    ServiceCardData(
-      icon: Icons.arrow_forward_ios,
-      label: 'Ver Mais',
-      color: AppTheme.textSecondary,
-    ),
-  ];
+  List<ServiceCardData> _financialServices(AppThemeTokens t) {
+    return [
+      ServiceCardData(icon: Icons.handshake, label: 'Renegociação', color: t.error),
+      ServiceCardData(icon: Icons.group, label: 'Consórcio', color: t.primaryLight),
+      ServiceCardData(icon: Icons.trending_up, label: 'Capitalização', color: t.success),
+      ServiceCardData(icon: Icons.currency_exchange, label: 'Câmbio', color: t.primary),
+      ServiceCardData(icon: Icons.security, label: 'Seguros', color: t.primaryLight),
+      ServiceCardData(
+        icon: Icons.arrow_forward_ios,
+        label: 'Ver Mais',
+        color: t.textSecondary,
+      ),
+    ];
+  }
 
-  static const _storyItems = [
-    StoryItemData(
-      label: 'Cashback',
-      icon: Icons.card_giftcard,
-      gradientColors: [AppTheme.primary, AppTheme.primaryLight],
-      offerTitle: 'Cashback especial',
-      offerSubtitle:
-          'Ganhe até 5% de volta em compras online selecionadas. Ative agora e aproveite nas suas lojas favoritas.',
-      offerCta: 'Ativar cashback',
-    ),
-    StoryItemData(
-      label: 'Empréstimo',
-      icon: Icons.attach_money,
-      gradientColors: [AppTheme.gradientBlueDark, AppTheme.gradientBlue],
-      offerTitle: 'Empréstimo pessoal',
-      offerSubtitle:
-          'Taxas a partir de 1,29% a.m. com aprovação em minutos. Simule agora sem comprometer seu score.',
-      offerCta: 'Simular agora',
-    ),
-    StoryItemData(
-      label: 'Conta',
-      icon: Icons.account_balance_wallet,
-      gradientColors: [AppTheme.gradientGreenDark, AppTheme.gradientGreen],
-      offerTitle: 'Conta digital grátis',
-      offerSubtitle:
-          'Sem tarifas de manutenção e com rendimento automático. Indique amigos e ganhe bônus exclusivos.',
-      offerCta: 'Abrir conta',
-    ),
-    StoryItemData(
-      label: 'Investir',
-      icon: Icons.trending_up,
-      gradientColors: [AppTheme.gradientAmberDark, AppTheme.gradientAmber],
-      offerTitle: 'Invista agora',
-      offerSubtitle:
-          'Rendimento de até 120% do CDI com liquidez diária. Comece com qualquer valor e veja seu dinheiro crescer.',
-      offerCta: 'Começar a investir',
-    ),
-    StoryItemData(
-      label: 'Tag',
-      icon: Icons.directions_car,
-      gradientColors: [Color(0xFF0C4A6E), Color(0xFF0284C7)],
-      offerTitle: 'Tag de pedágio',
-      offerSubtitle:
-          'Passe sem parar em pedágios e estacionamentos em todo o Brasil. Peça a sua Tag gratuita agora.',
-      offerCta: 'Pedir minha Tag',
-    ),
-    StoryItemData(
-      label: 'Livelo',
-      icon: Icons.star_rounded,
-      gradientColors: [Color(0xFF7C2D12), Color(0xFFEA580C)],
-      offerTitle: 'Pontos Livelo',
-      offerSubtitle:
-          'Acumule pontos em cada compra e troque por passagens, produtos e experiências incríveis.',
-      offerCta: 'Ver meus pontos',
-    ),
-    StoryItemData(
-      label: 'Empresa',
-      icon: Icons.business_center,
-      gradientColors: [AppTheme.gradientBlueDark, AppTheme.gradientBlue],
-      offerTitle: 'Conta PJ gratuita',
-      offerSubtitle:
-          'Conta para sua empresa sem tarifas de manutenção, com Pix ilimitado e gestão financeira integrada.',
-      offerCta: 'Abrir conta PJ',
-    ),
-  ];
+  List<StoryItemData> _storyItems(AppThemeTokens t) {
+    return [
+      StoryItemData(
+        label: 'Cashback',
+        icon: Icons.card_giftcard,
+        gradientColors: [t.primary, t.primaryLight],
+        offerTitle: 'Cashback especial',
+        offerSubtitle:
+            'Ganhe até 5% de volta em compras online selecionadas. Ative agora e aproveite nas suas lojas favoritas.',
+        offerCta: 'Ativar cashback',
+      ),
+      StoryItemData(
+        label: 'Empréstimo',
+        icon: Icons.attach_money,
+        gradientColors: [t.gradientBlueDark, t.gradientBlue],
+        offerTitle: 'Empréstimo pessoal',
+        offerSubtitle:
+            'Taxas a partir de 1,29% a.m. com aprovação em minutos. Simule agora sem comprometer seu score.',
+        offerCta: 'Simular agora',
+      ),
+      StoryItemData(
+        label: 'Conta',
+        icon: Icons.account_balance_wallet,
+        gradientColors: [t.gradientGreenDark, t.gradientGreen],
+        offerTitle: 'Conta digital grátis',
+        offerSubtitle:
+            'Sem tarifas de manutenção e com rendimento automático. Indique amigos e ganhe bônus exclusivos.',
+        offerCta: 'Abrir conta',
+      ),
+      StoryItemData(
+        label: 'Investir',
+        icon: Icons.trending_up,
+        gradientColors: [t.gradientAmberDark, t.gradientAmber],
+        offerTitle: 'Invista agora',
+        offerSubtitle:
+            'Rendimento de até 120% do CDI com liquidez diária. Comece com qualquer valor e veja seu dinheiro crescer.',
+        offerCta: 'Começar a investir',
+      ),
+      StoryItemData(
+        label: 'Tag',
+        icon: Icons.directions_car,
+        gradientColors: const [Color(0xFF0C4A6E), Color(0xFF0284C7)],
+        offerTitle: 'Tag de pedágio',
+        offerSubtitle:
+            'Passe sem parar em pedágios e estacionamentos em todo o Brasil. Peça a sua Tag gratuita agora.',
+        offerCta: 'Pedir minha Tag',
+      ),
+      StoryItemData(
+        label: 'Livelo',
+        icon: Icons.star_rounded,
+        gradientColors: const [Color(0xFF7C2D12), Color(0xFFEA580C)],
+        offerTitle: 'Pontos Livelo',
+        offerSubtitle:
+            'Acumule pontos em cada compra e troque por passagens, produtos e experiências incríveis.',
+        offerCta: 'Ver meus pontos',
+      ),
+      StoryItemData(
+        label: 'Empresa',
+        icon: Icons.business_center,
+        gradientColors: [t.gradientBlueDark, t.gradientBlue],
+        offerTitle: 'Conta PJ gratuita',
+        offerSubtitle:
+            'Conta para sua empresa sem tarifas de manutenção, com Pix ilimitado e gestão financeira integrada.',
+        offerCta: 'Abrir conta PJ',
+      ),
+    ];
+  }
+
+  List<CarouselItemData> _carouselItems(AppThemeTokens t) {
+    return [
+      CarouselItemData(
+        title: 'Cashback especial',
+        subtitle: 'Ganhe até 5% de volta em compras online selecionadas',
+        icon: Icons.card_giftcard,
+        gradientColors: [t.primary, t.primaryLight],
+      ),
+      CarouselItemData(
+        title: 'Empréstimo pessoal',
+        subtitle: 'Taxas a partir de 1,29% a.m. com aprovação em minutos',
+        icon: Icons.attach_money,
+        gradientColors: [t.gradientBlueDark, t.gradientBlue],
+      ),
+      CarouselItemData(
+        title: 'Conta digital grátis',
+        subtitle: 'Sem tarifas de manutenção e com rendimento automático',
+        icon: Icons.account_balance_wallet,
+        gradientColors: [t.gradientGreenDark, t.gradientGreen],
+      ),
+      CarouselItemData(
+        title: 'Invista agora',
+        subtitle: 'Rendimento de até 120% do CDI com liquidez diária',
+        icon: Icons.trending_up,
+        gradientColors: [t.gradientAmberDark, t.gradientAmber],
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -253,21 +290,27 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Future<void> _confirmLogout(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar logout'),
-        content: const Text('Deseja realmente sair da sua conta?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Sair'),
-          ),
-        ],
-      ),
+      builder: (dialogContext) {
+        final t = AppTheme.of(dialogContext);
+        return AlertDialog(
+          title: const Text('Confirmar logout'),
+          content: const Text('Deseja realmente sair da sua conta?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurface),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(backgroundColor: t.error),
+              child: const Text('Sair'),
+            ),
+          ],
+        );
+      },
     );
     if (confirm == true && context.mounted) {
       context.read<AuthBloc>().add(const AuthSignOutRequested());
@@ -298,6 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 : txState is TransactionActionSuccess
                 ? txState.data
                 : null;
+            final t = AppTheme.of(context);
 
             return PopScope(
               canPop: false,
@@ -305,7 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 if (!didPop) _confirmLogout(context);
               },
               child: Scaffold(
-                backgroundColor: AppTheme.background,
+                backgroundColor: t.background,
                 appBar: _buildAppBar(context, user),
                 body: RefreshIndicator(
                   onRefresh: () async {
@@ -317,7 +361,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   },
                   child: loaded == null && txState is TransactionLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : _buildBody(context, loaded),
+                      : _buildBody(context, loaded, t),
                 ),
                 floatingActionButton: FadeTransition(
                   opacity: _actionsFade,
@@ -328,7 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                         MaterialPageRoute(builder: (_) => const TransactionListScreen()),
                       );
                     },
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: t.primary,
                     icon: const Icon(Icons.list),
                     label: const Text('Transações'),
                   ),
@@ -361,6 +405,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ),
       ),
       actions: [
+        IconButton(
+          icon: Icon(
+            Theme.of(context).brightness == Brightness.dark ? Icons.light_mode : Icons.dark_mode,
+          ),
+          onPressed: widget.onToggleThemeMode,
+        ),
         if (user != null)
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -377,7 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildBody(BuildContext context, TransactionLoaded? loaded) {
+  Widget _buildBody(BuildContext context, TransactionLoaded? loaded, AppThemeTokens t) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
@@ -388,7 +438,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             position: _storiesSlide,
             child: FadeTransition(
               opacity: _storiesFade,
-              child: DashboardStoriesSection(items: _storyItems),
+              child: DashboardStoriesSection(items: _storyItems(t)),
             ),
           ),
           const SizedBox(height: 20),
@@ -412,7 +462,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             position: _services1Slide,
             child: FadeTransition(
               opacity: _services1Fade,
-              child: const ServiceScrollSection(title: 'Para seu dia a dia', items: _dailyServices),
+              child: ServiceScrollSection(title: 'Para seu dia a dia', items: _dailyServices(t)),
             ),
           ),
           const SizedBox(height: 20),
@@ -420,16 +470,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             position: _services2Slide,
             child: FadeTransition(
               opacity: _services2Fade,
-              child: const ServiceScrollSection(
+              child: ServiceScrollSection(
                 title: 'Mais serviços financeiros',
-                items: _financialServices,
+                items: _financialServices(t),
               ),
             ),
           ),
           const SizedBox(height: 20),
           SlideTransition(
             position: _carouselSlide,
-            child: FadeTransition(opacity: _carouselFade, child: const DashboardCarouselSection()),
+            child: FadeTransition(
+              opacity: _carouselFade,
+              child: DashboardCarouselSection(items: _carouselItems(t)),
+            ),
           ),
           const SizedBox(height: 80),
         ],

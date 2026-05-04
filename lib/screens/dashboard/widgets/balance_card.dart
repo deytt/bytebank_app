@@ -17,6 +17,7 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     final balance = widget.loaded?.balance ?? 0.0;
     final income = widget.loaded?.totalIncome ?? 0.0;
     final expense = widget.loaded?.totalExpense ?? 0.0;
@@ -27,10 +28,10 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.balanceSurface.withValues(alpha: 0.55), AppTheme.surface],
+          colors: [t.balanceSurface.withValues(alpha: 0.55), t.surface],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.gradientBlue.withValues(alpha: 0.20)),
+        border: Border.all(color: t.gradientBlue.withValues(alpha: 0.20)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -42,7 +43,7 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
                 Text(
                   'Saldo atual',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: t.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -54,7 +55,7 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
                     child: Icon(
                       _obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                       key: ValueKey(_obscured),
-                      color: AppTheme.textSecondary,
+                      color: t.textSecondary,
                       size: 20,
                     ),
                   ),
@@ -68,7 +69,7 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textSecondary,
+                      color: t.textSecondary,
                       letterSpacing: 4,
                     ),
                   )
@@ -77,7 +78,7 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
                     style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: isPositive ? AppTheme.success : AppTheme.error,
+                      color: isPositive ? t.success : t.error,
                     ),
                     child: Text(Formatters.formatCurrency(balance)),
                   ),
@@ -88,14 +89,14 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
                 _BalanceItem(
                   label: 'Receitas',
                   value: income,
-                  color: AppTheme.success,
+                  color: t.success,
                   icon: Icons.arrow_upward_rounded,
                   obscured: _obscured,
                 ),
                 _BalanceItem(
                   label: 'Despesas',
                   value: expense,
-                  color: AppTheme.error,
+                  color: t.error,
                   icon: Icons.arrow_downward_rounded,
                   obscured: _obscured,
                 ),

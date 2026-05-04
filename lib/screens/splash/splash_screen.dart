@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.white,
+      backgroundColor: AppTheme.of(context).background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 48.0),

@@ -111,10 +111,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-  Widget _formSection({required List<Widget> children}) {
+  Widget _formSection(BuildContext context, {required List<Widget> children}) {
     return Container(
       width: double.infinity,
-      decoration: AppTheme.formSectionDecoration,
+      decoration: AppTheme.of(context).formSectionDecoration,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,37 +132,39 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (state is TransactionActionSuccess) {
           Navigator.pop(context);
         } else if (state is TransactionActionFailure) {
+          final t = AppTheme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: AppTheme.error,
+              backgroundColor: t.error,
             ),
           );
         }
       },
       builder: (context, state) {
         final isSubmitting = state is TransactionLoaded && state.isSubmitting;
+        final t = AppTheme.of(context);
 
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: t.background,
           appBar: AppBar(
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
             backgroundColor: Colors.transparent,
             flexibleSpace: Container(
-              decoration: BoxDecoration(gradient: AppTheme.transactionAppBarGradient),
+              decoration: BoxDecoration(gradient: t.transactionAppBarGradient),
             ),
-            foregroundColor: AppTheme.textPrimary,
+            foregroundColor: t.textPrimary,
             title: Text(isEdit ? 'Editar Transação' : 'Nova Transação'),
           ),
           body: Container(
             width: double.infinity,
-            decoration: BoxDecoration(gradient: AppTheme.transactionScreenBackgroundGradient),
+            decoration: BoxDecoration(gradient: t.transactionScreenBackgroundGradient),
             child: Theme(
               data: Theme.of(context).copyWith(
                 inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
-                      fillColor: AppTheme.surface.withValues(alpha: 0.55),
+                      fillColor: t.surface.withValues(alpha: 0.55),
                     ),
               ),
               child: SingleChildScrollView(
@@ -173,6 +175,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _formSection(
+                        context,
                         children: [
                           CustomInput(
                             label: 'Título',
@@ -200,6 +203,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       ),
                       const SizedBox(height: 12),
                       _formSection(
+                        context,
                         children: [
                           Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
                           const SizedBox(height: 8),
@@ -240,6 +244,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       ),
                       const SizedBox(height: 12),
                       _formSection(
+                        context,
                         children: [
                           Material(
                             color: Colors.transparent,
@@ -253,7 +258,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                     Icon(
                                       Icons.calendar_today_outlined,
                                       size: 20,
-                                      color: AppTheme.textSecondary.withValues(alpha: 0.95),
+                                      color: t.textSecondary.withValues(alpha: 0.95),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -274,7 +279,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                     ),
                                     Icon(
                                       Icons.chevron_right_rounded,
-                                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                                      color: t.textSecondary.withValues(alpha: 0.7),
                                     ),
                                   ],
                                 ),
@@ -285,6 +290,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       ),
                       const SizedBox(height: 12),
                       _formSection(
+                        context,
                         children: [
                           Text(
                             'Recibo (opcional)',
@@ -304,17 +310,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                               decoration: BoxDecoration(
-                                color: AppTheme.surface.withValues(alpha: 0.45),
+                                color: t.surface.withValues(alpha: 0.45),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppTheme.primaryLight.withValues(alpha: 0.2),
+                                  color: t.primaryLight.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
                                     Icons.receipt_long_outlined,
-                                    color: AppTheme.textSecondary.withValues(alpha: 0.95),
+                                    color: t.textSecondary.withValues(alpha: 0.95),
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
@@ -331,9 +337,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               label: const Text('Adicionar Recibo'),
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 48),
-                                foregroundColor: AppTheme.textPrimary,
-                                side: BorderSide(color: AppTheme.primaryLight.withValues(alpha: 0.45)),
-                                backgroundColor: AppTheme.surface.withValues(alpha: 0.35),
+                                foregroundColor: t.textPrimary,
+                                side: BorderSide(color: t.primaryLight.withValues(alpha: 0.45)),
+                                backgroundColor: t.surface.withValues(alpha: 0.35),
                               ),
                             ),
                         ],
@@ -349,12 +355,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             elevation: 0,
                           ),
                           child: isSubmitting
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: AppTheme.white,
+                                    color: t.white,
                                   ),
                                 )
                               : Text(isEdit ? 'Atualizar' : 'Adicionar'),
@@ -380,6 +386,7 @@ class _ReceiptPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return FutureBuilder<Uint8List>(
       future: receiptFile.readAsBytes(),
       builder: (context, snapshot) {
@@ -392,7 +399,7 @@ class _ReceiptPreview extends StatelessWidget {
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.25)),
+                    border: Border.all(color: t.primaryLight.withValues(alpha: 0.25)),
                     image: DecorationImage(
                       image: MemoryImage(snapshot.data!),
                       fit: BoxFit.cover,
@@ -403,10 +410,10 @@ class _ReceiptPreview extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppTheme.white),
+                    icon: Icon(Icons.close_rounded, color: t.white),
                     onPressed: onRemove,
                     style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.black.withValues(alpha: 0.54),
+                      backgroundColor: t.black.withValues(alpha: 0.54),
                     ),
                   ),
                 ),
@@ -417,7 +424,7 @@ class _ReceiptPreview extends StatelessWidget {
         return SizedBox(
           height: 200,
           child: Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryLight),
+            child: CircularProgressIndicator(color: t.primaryLight),
           ),
         );
       },

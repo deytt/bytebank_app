@@ -14,20 +14,21 @@ class TransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     final isIncome = transaction.type == TransactionType.income;
-    final color = isIncome ? AppTheme.success : AppTheme.error;
+    final color = isIncome ? t.success : t.error;
     final icon = isIncome ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
     final dateStr = DateFormat('dd/MM/yyyy').format(transaction.date);
     final dateStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
           fontSize: 11,
           height: 1.2,
-          color: AppTheme.textSecondary.withValues(alpha: 0.95),
+          color: t.textSecondary.withValues(alpha: 0.95),
         );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: DecoratedBox(
-        decoration: AppTheme.transactionListItemDecoration,
+        decoration: t.transactionListItemDecoration,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -104,7 +105,7 @@ class TransactionCard extends StatelessWidget {
                                       const SizedBox(width: 6),
                                       Icon(
                                         Icons.receipt_long_outlined,
-                                        color: AppTheme.textSecondary.withValues(alpha: 0.85),
+                                        color: t.textSecondary.withValues(alpha: 0.85),
                                         size: 13,
                                       ),
                                     ],
@@ -115,7 +116,7 @@ class TransactionCard extends StatelessWidget {
                                 IconButton(
                                   icon: Icon(
                                     Icons.delete_outline_rounded,
-                                    color: AppTheme.error.withValues(alpha: 0.9),
+                                    color: t.error.withValues(alpha: 0.9),
                                   ),
                                   iconSize: 21,
                                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),

@@ -101,14 +101,15 @@ class _ServiceScrollSectionState extends State<ServiceScrollSection> {
         ValueListenableBuilder<double>(
           valueListenable: _progress,
           builder: (context, value, _) {
+            final t = AppTheme.of(context);
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: value,
-                  backgroundColor: AppTheme.surface,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryLight),
+                  backgroundColor: t.surface,
+                  valueColor: AlwaysStoppedAnimation<Color>(t.primaryLight),
                   minHeight: 3,
                 ),
               ),
@@ -127,6 +128,7 @@ class _ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return SizedBox(
       width: 100,
       child: Column(
@@ -138,7 +140,7 @@ class _ServiceCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [data.color.withValues(alpha: 0.25), AppTheme.surface],
+                colors: [data.color.withValues(alpha: 0.25), t.surface],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: data.color.withValues(alpha: 0.18)),

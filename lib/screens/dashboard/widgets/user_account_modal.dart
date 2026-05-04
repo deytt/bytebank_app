@@ -9,15 +9,16 @@ class DashboardUserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return CircleAvatar(
       radius: 18,
-      backgroundColor: AppTheme.primary,
+      backgroundColor: t.primary,
       backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
       child: user.photoUrl == null
           ? Text(
               user.initials,
-              style: const TextStyle(
-                color: AppTheme.white,
+              style: TextStyle(
+                color: t.white,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
@@ -34,6 +35,7 @@ class UserAccountModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -43,13 +45,13 @@ class UserAccountModal extends StatelessWidget {
             tag: 'user_avatar',
             child: CircleAvatar(
               radius: 36,
-              backgroundColor: AppTheme.primary,
+              backgroundColor: t.primary,
               backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
               child: user.photoUrl == null
                   ? Text(
                       user.initials,
-                      style: const TextStyle(
-                        color: AppTheme.white,
+                      style: TextStyle(
+                        color: t.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),

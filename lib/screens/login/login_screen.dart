@@ -99,21 +99,27 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         if (!didPop) {
           final confirm = await showDialog<bool>(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Fechar aplicativo'),
-              content: const Text('Deseja realmente fechar o aplicativo?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancelar', style: TextStyle(color: AppTheme.white)),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-                  child: const Text('Fechar'),
-                ),
-              ],
-            ),
+            builder: (dialogContext) {
+              final t = AppTheme.of(dialogContext);
+              return AlertDialog(
+                title: const Text('Fechar aplicativo'),
+                content: const Text('Deseja realmente fechar o aplicativo?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: Text(
+                      'Cancelar',
+                      style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurface),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogContext, true),
+                    style: ElevatedButton.styleFrom(backgroundColor: t.error),
+                    child: const Text('Fechar'),
+                  ),
+                ],
+              );
+            },
           );
           if (confirm == true) {
             SystemNavigator.pop();
@@ -123,16 +129,18 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       child: BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
+          final t = AppTheme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppTheme.error),
+            SnackBar(content: Text(state.message), backgroundColor: t.error),
           );
         }
       },
       builder: (context, state) {
         final isLoading = state is AuthLoading;
+        final t = AppTheme.of(context);
 
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: t.background,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -193,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                  color: AppTheme.textSecondary,
+                                  color: t.textSecondary,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -216,12 +224,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               child: ElevatedButton(
                                 onPressed: isLoading ? null : _submit,
                                 child: isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         height: 20,
                                         width: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: AppTheme.white,
+                                          color: t.white,
                                         ),
                                       )
                                     : Text(_isLogin ? 'Entrar' : 'Criar conta'),
@@ -248,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                 onPressed: isLoading ? null : _signInWithGoogle,
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 14),
-                                  side: const BorderSide(color: AppTheme.textSecondary),
+                                  side: BorderSide(color: t.textSecondary),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -283,8 +291,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                     ),
                                     TextSpan(
                                       text: _isLogin ? 'Criar conta' : 'Entrar',
-                                      style: const TextStyle(
-                                        color: AppTheme.primaryLight,
+                                      style: TextStyle(
+                                        color: t.primaryLight,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -313,18 +321,19 @@ class _GoogleIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppTheme.of(context);
     return Container(
       width: 22,
       height: 22,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppTheme.white,
+        color: t.white,
       ),
-      child: const Center(
+      child: Center(
         child: Text(
           'G',
           style: TextStyle(
-            color: AppTheme.googleBlue,
+            color: t.googleBlue,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),

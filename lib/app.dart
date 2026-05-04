@@ -17,6 +17,13 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   bool _showSplash = true;
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  void _toggleThemeMode() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   void initState() {
@@ -37,7 +44,9 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Bytebank App',
-      theme: AppTheme.theme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _themeMode,
       debugShowCheckedModeBanner: false,
       locale: const Locale('pt', 'BR'),
       localizationsDelegates: const [
@@ -64,7 +73,7 @@ class _AppState extends State<App> {
                 }
 
                 if (state is AuthAuthenticated) {
-                  return const DashboardScreen();
+                  return DashboardScreen(onToggleThemeMode: _toggleThemeMode);
                 }
 
                 return const LoginScreen();
