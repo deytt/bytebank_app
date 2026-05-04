@@ -28,6 +28,48 @@ class AppTheme {
   static const Color chartBlue = Color(0xFF3B82F6);
   static const Color chartAmber = Color(0xFFF59E0B);
 
+  static const Color neutralBorder = Color(0xFF27272A);
+  static const Color transactionCardFill = Color(0xFF18181B);
+  static const Color transactionAppBarEnd = Color(0xFF1C1C1F);
+
+  static const double _cardRadius = 12;
+
+  static LinearGradient get transactionScreenBackgroundGradient => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          const Color(0xFF0C0C0E),
+          background,
+        ],
+      );
+
+  static LinearGradient get transactionAppBarGradient => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          surface,
+          transactionAppBarEnd,
+        ],
+      );
+
+  static BoxDecoration get transactionListItemDecoration => BoxDecoration(
+        color: transactionCardFill,
+        borderRadius: BorderRadius.circular(_cardRadius),
+        border: Border.all(color: neutralBorder),
+      );
+
+  static BoxDecoration get formSectionDecoration => BoxDecoration(
+        color: transactionCardFill,
+        borderRadius: BorderRadius.circular(_cardRadius),
+        border: Border.all(color: neutralBorder),
+      );
+
+  static BoxDecoration get searchFieldShellDecoration => BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(_cardRadius),
+        border: Border.all(color: neutralBorder),
+      );
+
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
