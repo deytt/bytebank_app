@@ -17,7 +17,14 @@ class TransactionLoading extends TransactionState {
 
 class TransactionLoaded extends TransactionState {
   final List<TransactionModel> transactions;
+
+  /// Recent transactions used for chart rendering (capped at 200).
   final List<TransactionModel> allTransactions;
+
+  /// Totals from Firestore aggregation queries — not computed from allTransactions.
+  final double totalIncome;
+  final double totalExpense;
+
   final bool hasMore;
   final bool isLoadingMore;
   final bool isSubmitting;
@@ -25,24 +32,20 @@ class TransactionLoaded extends TransactionState {
   const TransactionLoaded({
     required this.transactions,
     required this.allTransactions,
+    required this.totalIncome,
+    required this.totalExpense,
     this.hasMore = false,
     this.isLoadingMore = false,
     this.isSubmitting = false,
   });
-
-  double get totalIncome => allTransactions
-      .where((t) => t.type == TransactionType.income)
-      .fold(0.0, (acc, t) => acc + t.value);
-
-  double get totalExpense => allTransactions
-      .where((t) => t.type == TransactionType.expense)
-      .fold(0.0, (acc, t) => acc + t.value);
 
   double get balance => totalIncome - totalExpense;
 
   TransactionLoaded copyWith({
     List<TransactionModel>? transactions,
     List<TransactionModel>? allTransactions,
+    double? totalIncome,
+    double? totalExpense,
     bool? hasMore,
     bool? isLoadingMore,
     bool? isSubmitting,
@@ -50,6 +53,8 @@ class TransactionLoaded extends TransactionState {
     return TransactionLoaded(
       transactions: transactions ?? this.transactions,
       allTransactions: allTransactions ?? this.allTransactions,
+      totalIncome: totalIncome ?? this.totalIncome,
+      totalExpense: totalExpense ?? this.totalExpense,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       isSubmitting: isSubmitting ?? this.isSubmitting,
@@ -57,7 +62,15 @@ class TransactionLoaded extends TransactionState {
   }
 
   @override
-  List<Object?> get props => [transactions, allTransactions, hasMore, isLoadingMore, isSubmitting];
+  List<Object?> get props => [
+        transactions,
+        allTransactions,
+        totalIncome,
+        totalExpense,
+        hasMore,
+        isLoadingMore,
+        isSubmitting,
+      ];
 }
 
 class TransactionError extends TransactionState {

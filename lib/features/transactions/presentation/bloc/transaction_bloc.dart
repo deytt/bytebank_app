@@ -1,10 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/models/transaction_model.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/usecases/get_transactions_usecase.dart';
+import '../../domain/usecases/get_transaction_aggregates_usecase.dart';
 import '../../domain/usecases/add_transaction_usecase.dart';
 import '../../domain/usecases/update_transaction_usecase.dart';
 import '../../domain/usecases/delete_transaction_usecase.dart';
@@ -14,6 +16,7 @@ part 'transaction_state.dart';
 
 class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final GetTransactionsUseCase _getTransactions;
+  final GetTransactionAggregatesUseCase _getAggregates;
   final AddTransactionUseCase _addTransaction;
   final UpdateTransactionUseCase _updateTransaction;
   final DeleteTransactionUseCase _deleteTransaction;
@@ -28,10 +31,12 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
 
   TransactionBloc({
     required GetTransactionsUseCase getTransactions,
+    required GetTransactionAggregatesUseCase getAggregates,
     required AddTransactionUseCase addTransaction,
     required UpdateTransactionUseCase updateTransaction,
     required DeleteTransactionUseCase deleteTransaction,
   })  : _getTransactions = getTransactions,
+        _getAggregates = getAggregates,
         _addTransaction = addTransaction,
         _updateTransaction = updateTransaction,
         _deleteTransaction = deleteTransaction,
@@ -62,26 +67,35 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     _currentType = event.type;
 
     try {
-      final page = await _getTransactions(
-        event.userId,
-        category: event.category,
-        searchTitle: event.searchTitle,
-        hasReceipt: event.hasReceipt,
-        dateRangeDays: event.dateRangeDays,
-        type: event.type,
-      );
+      final results = await Future.wait([
+        _getTransactions(
+          event.userId,
+          category: event.category,
+          searchTitle: event.searchTitle,
+          hasReceipt: event.hasReceipt,
+          dateRangeDays: event.dateRangeDays,
+          type: event.type,
+        ),
+        _getAggregates(event.userId),
+        _getTransactions(event.userId, limit: 200),
+      ]);
 
-      _lastCursor = page.cursor;
+      _lastCursor = (results[0] as dynamic).cursor;
 
-      final allPage = await _getTransactions(event.userId, limit: 1000);
+      final page = results[0] as dynamic;
+      final aggregates = results[1] as ({double totalIncome, double totalExpense});
+      final chartPage = results[2] as dynamic;
 
       if (emit.isDone) return;
       emit(TransactionLoaded(
-        transactions: page.transactions.cast<TransactionModel>(),
-        allTransactions: allPage.transactions.cast<TransactionModel>(),
-        hasMore: page.hasMore,
+        transactions: (page.transactions as List).cast<TransactionModel>(),
+        allTransactions: (chartPage.transactions as List).cast<TransactionModel>(),
+        totalIncome: aggregates.totalIncome,
+        totalExpense: aggregates.totalExpense,
+        hasMore: page.hasMore as bool,
       ));
     } catch (e) {
+      debugPrint('LoadTransactions error: $e');
       if (emit.isDone) return;
       emit(TransactionError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -120,6 +134,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
         isLoadingMore: false,
       ));
     } catch (e) {
+      debugPrint('LoadMoreTransactions error: $e');
       emit(current.copyWith(isLoadingMore: false));
     }
   }
@@ -139,6 +154,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       await _addTransaction(event.transaction, receiptFile: event.receiptFile);
       await _reloadAll(emit, 'Transação adicionada com sucesso');
     } catch (e) {
+      debugPrint('AddTransaction error: $e');
       if (currentLoaded != null) {
         emit(TransactionActionFailure(
           message: e.toString().replaceAll('Exception: ', ''),
@@ -167,6 +183,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       await _updateTransaction(event.transaction, receiptFile: event.receiptFile);
       await _reloadAll(emit, 'Transação atualizada com sucesso');
     } catch (e) {
+      debugPrint('UpdateTransaction error: $e');
       if (currentLoaded != null) {
         emit(TransactionActionFailure(
           message: e.toString().replaceAll('Exception: ', ''),
@@ -188,6 +205,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       await _deleteTransaction(event.transaction);
       await _reloadAll(emit, 'Transação excluída com sucesso');
     } catch (e) {
+      debugPrint('DeleteTransaction error: $e');
       final current = state;
       if (current is TransactionLoaded) {
         emit(TransactionActionFailure(
@@ -218,28 +236,37 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     if (_currentUserId == null) return;
 
     try {
-      final page = await _getTransactions(
-        _currentUserId!,
-        category: _currentCategory,
-        searchTitle: _currentSearchTitle,
-        hasReceipt: _currentHasReceipt,
-        dateRangeDays: _currentDateRangeDays,
-        type: _currentType,
-      );
+      final results = await Future.wait([
+        _getTransactions(
+          _currentUserId!,
+          category: _currentCategory,
+          searchTitle: _currentSearchTitle,
+          hasReceipt: _currentHasReceipt,
+          dateRangeDays: _currentDateRangeDays,
+          type: _currentType,
+        ),
+        _getAggregates(_currentUserId!),
+        _getTransactions(_currentUserId!, limit: 200),
+      ]);
 
-      _lastCursor = page.cursor;
+      _lastCursor = (results[0] as dynamic).cursor;
 
-      final allPage = await _getTransactions(_currentUserId!, limit: 1000);
+      final page = results[0] as dynamic;
+      final aggregates = results[1] as ({double totalIncome, double totalExpense});
+      final chartPage = results[2] as dynamic;
 
       final loaded = TransactionLoaded(
-        transactions: page.transactions.cast<TransactionModel>(),
-        allTransactions: allPage.transactions.cast<TransactionModel>(),
-        hasMore: page.hasMore,
+        transactions: (page.transactions as List).cast<TransactionModel>(),
+        allTransactions: (chartPage.transactions as List).cast<TransactionModel>(),
+        totalIncome: aggregates.totalIncome,
+        totalExpense: aggregates.totalExpense,
+        hasMore: page.hasMore as bool,
       );
 
       if (emit.isDone) return;
       emit(TransactionActionSuccess(message: successMessage, data: loaded));
     } catch (e) {
+      debugPrint('ReloadAll error: $e');
       if (emit.isDone) return;
       emit(TransactionError(e.toString().replaceAll('Exception: ', '')));
     }

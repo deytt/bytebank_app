@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/transaction.dart';
@@ -218,6 +219,68 @@ class TransactionRepositoryImpl implements TransactionRepository {
       if (userId != null) await _clearCache(userId);
     } catch (e) {
       throw Exception('Erro ao deletar transação');
+    }
+  }
+
+  @override
+  Future<({double totalIncome, double totalExpense})> getAggregates(String userId) async {
+    try {
+      final base = _firestore
+          .collection(_collection)
+          .where('userId', isEqualTo: userId);
+
+      final incomeResult = await base
+          .where('type', isEqualTo: 'income')
+          .aggregate(sum('value'))
+          .get();
+
+      final expenseResult = await base
+          .where('type', isEqualTo: 'expense')
+          .aggregate(sum('value'))
+          .get();
+
+      return (
+        totalIncome: (incomeResult.getSum('value') ?? 0).toDouble(),
+        totalExpense: (expenseResult.getSum('value') ?? 0).toDouble(),
+      );
+    } catch (e, st) {
+      // Composite index not yet available — fall back to client-side computation
+      if (e.toString().contains('failed-precondition') ||
+          e.toString().contains('FAILED_PRECONDITION')) {
+        debugPrint('getAggregates: index not ready, using fallback');
+        return _computeAggregatesFallback(userId);
+      }
+      debugPrint('getAggregates error: $e\n$st');
+      throw Exception('Erro ao calcular totais');
+    }
+  }
+
+  /// Fallback: computes totals with a full collection scan.
+  /// Used while the composite index for sum() aggregation is not yet available.
+  Future<({double totalIncome, double totalExpense})> _computeAggregatesFallback(
+      String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection(_collection)
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      double totalIncome = 0;
+      double totalExpense = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final value = (data['value'] as num?)?.toDouble() ?? 0;
+        final type = data['type'] as String?;
+        if (type == 'income') {
+          totalIncome += value;
+        } else if (type == 'expense') {
+          totalExpense += value;
+        }
+      }
+      return (totalIncome: totalIncome, totalExpense: totalExpense);
+    } catch (e) {
+      debugPrint('getAggregates fallback error: $e');
+      throw Exception('Erro ao calcular totais');
     }
   }
 

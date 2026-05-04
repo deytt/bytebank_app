@@ -34,6 +34,8 @@ abstract class TransactionRepository {
 
   Future<void> delete(String id);
 
+  Future<({double totalIncome, double totalExpense})> getAggregates(String userId);
+
   Future<String> uploadReceipt(XFile file, String userId);
 
   Future<void> deleteReceipt(String url);
