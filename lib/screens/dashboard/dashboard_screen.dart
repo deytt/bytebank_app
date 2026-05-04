@@ -21,15 +21,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
-  late AnimationController _headerController;
-  late AnimationController _balanceController;
-  late AnimationController _chartController;
-  late AnimationController _actionsController;
-  late AnimationController _storiesController;
-  late AnimationController _services1Controller;
-  late AnimationController _services2Controller;
-  late AnimationController _carouselController;
+class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _pageController;
 
   late Animation<double> _headerFade;
   late Animation<Offset> _headerSlide;
@@ -116,140 +109,117 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   void initState() {
     super.initState();
     _setupAnimations();
-    _runAnimationSequence();
+    _pageController.forward();
   }
 
   void _setupAnimations() {
-    _storiesController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _headerController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _balanceController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _chartController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _actionsController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _services1Controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _services2Controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _carouselController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+    _pageController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
 
-    _headerFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOut));
-    _headerSlide = Tween<Offset>(
-      begin: const Offset(0.0, -0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic));
+    _headerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.00, 0.25, curve: Curves.easeOut),
+      ),
+    );
+    _headerSlide = Tween<Offset>(begin: const Offset(0.0, -0.2), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.00, 0.25, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _balanceFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _balanceController, curve: Curves.easeOut));
-    _balanceSlide = Tween<Offset>(
-      begin: const Offset(0.0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _balanceController, curve: Curves.easeOutCubic));
+    _storiesFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.30, 0.55, curve: Curves.easeOut),
+      ),
+    );
+    _storiesSlide = Tween<Offset>(begin: const Offset(0.0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.30, 0.55, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _chartFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _chartController, curve: Curves.easeOut));
-    _chartSlide = Tween<Offset>(
-      begin: const Offset(0.0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _chartController, curve: Curves.easeOutCubic));
+    _balanceFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.375, 0.625, curve: Curves.easeOut),
+      ),
+    );
+    _balanceSlide = Tween<Offset>(begin: const Offset(0.0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.375, 0.625, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _actionsFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _actionsController, curve: Curves.easeOut));
+    _chartFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.425, 0.725, curve: Curves.easeOut),
+      ),
+    );
+    _chartSlide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.425, 0.725, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _storiesFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _storiesController, curve: Curves.easeOut));
-    _storiesSlide = Tween<Offset>(
-      begin: const Offset(0.0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _storiesController, curve: Curves.easeOutCubic));
+    _actionsFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.525, 0.725, curve: Curves.easeOut),
+      ),
+    );
 
-    _services1Fade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _services1Controller, curve: Curves.easeOut));
-    _services1Slide = Tween<Offset>(
-      begin: const Offset(0.0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _services1Controller, curve: Curves.easeOutCubic));
+    _services1Fade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.60, 0.85, curve: Curves.easeOut),
+      ),
+    );
+    _services1Slide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.60, 0.85, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _services2Fade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _services2Controller, curve: Curves.easeOut));
-    _services2Slide = Tween<Offset>(
-      begin: const Offset(0.0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _services2Controller, curve: Curves.easeOutCubic));
+    _services2Fade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.675, 0.925, curve: Curves.easeOut),
+      ),
+    );
+    _services2Slide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.675, 0.925, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _carouselFade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _carouselController, curve: Curves.easeOut));
-    _carouselSlide = Tween<Offset>(
-      begin: const Offset(0.0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _carouselController, curve: Curves.easeOutCubic));
-  }
-
-  Future<void> _runAnimationSequence() async {
-    await _headerController.forward();
-    await Future.delayed(const Duration(milliseconds: 100));
-    _storiesController.forward();
-    await Future.delayed(const Duration(milliseconds: 150));
-    await _balanceController.forward();
-    await Future.delayed(const Duration(milliseconds: 100));
-    _chartController.forward();
-    await Future.delayed(const Duration(milliseconds: 200));
-    _actionsController.forward();
-    await Future.delayed(const Duration(milliseconds: 150));
-    _services1Controller.forward();
-    await Future.delayed(const Duration(milliseconds: 150));
-    _services2Controller.forward();
-    await Future.delayed(const Duration(milliseconds: 150));
-    _carouselController.forward();
+    _carouselFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.75, 1.00, curve: Curves.easeOut),
+      ),
+    );
+    _carouselSlide = Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _pageController,
+        curve: const Interval(0.75, 1.00, curve: Curves.easeOutCubic),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _storiesController.dispose();
-    _headerController.dispose();
-    _balanceController.dispose();
-    _chartController.dispose();
-    _actionsController.dispose();
-    _services1Controller.dispose();
-    _services2Controller.dispose();
-    _carouselController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
