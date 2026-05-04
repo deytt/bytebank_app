@@ -10,6 +10,23 @@ class AppTheme {
   static const Color white = Color(0xFFFFFFFF);
   static const Color success = Color(0xFF22C55E);
   static const Color error = Color(0xFFEF4444);
+  static const Color black = Color(0xFF000000);
+  static const Color googleBlue = Color(0xFF4285F4);
+
+  // Gradient pairs used across stories and carousel items
+  static const Color gradientBlueDark = Color(0xFF1E3A5F);
+  static const Color gradientBlue = Color(0xFF2563EB);
+  static const Color gradientGreenDark = Color(0xFF064E3B);
+  static const Color gradientGreen = Color(0xFF059669);
+  static const Color gradientAmberDark = Color(0xFF78350F);
+  static const Color gradientAmber = Color(0xFFD97706);
+
+  // Balance card background gradient start
+  static const Color balanceSurface = Color(0xFF0D3B5E);
+
+  // Additional chart/pie colors
+  static const Color chartBlue = Color(0xFF3B82F6);
+  static const Color chartAmber = Color(0xFFF59E0B);
 
   static ThemeData get theme {
     return ThemeData(
