@@ -146,57 +146,83 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         final hasMore = loaded?.hasMore ?? false;
 
         return Scaffold(
+          backgroundColor: AppTheme.background,
           appBar: AppBar(
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(gradient: AppTheme.transactionAppBarGradient),
+            ),
+            foregroundColor: AppTheme.textPrimary,
             title: const Text('Transações'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.filter_list),
+                icon: const Icon(Icons.filter_list_rounded),
                 onPressed: () => _showFilterDialog(),
               ),
             ],
           ),
-          body: RefreshIndicator(
-            onRefresh: () async => _loadInitial(),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por título (mín. 3 caracteres)...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                _applyFilters();
-                              },
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+          body: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(gradient: AppTheme.transactionScreenBackgroundGradient),
+            child: RefreshIndicator(
+              color: AppTheme.primaryLight,
+              onRefresh: () async => _loadInitial(),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Container(
+                      decoration: AppTheme.searchFieldShellDecoration,
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: TextField(
+                        controller: _searchController,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por título (mín. 3 caracteres)...',
+                          hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.85)),
+                          prefixIcon: Icon(Icons.search_rounded, color: AppTheme.textSecondary.withValues(alpha: 0.9)),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.close_rounded, color: AppTheme.textSecondary.withValues(alpha: 0.9)),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _applyFilters();
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryLight.withValues(alpha: 0.45)),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                          helperText: _searchController.text.isNotEmpty &&
+                                  _searchController.text.length < 3
+                              ? 'Digite pelo menos 3 caracteres'
+                              : null,
+                          helperStyle: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        onChanged: (value) {
+                          setState(() {});
+                          if (value.isEmpty || value.length >= 3) {
+                            Future.delayed(const Duration(milliseconds: 500), () {
+                              if (_searchController.text == value) _applyFilters();
+                            });
+                          }
+                        },
                       ),
-                      helperText: _searchController.text.isNotEmpty &&
-                              _searchController.text.length < 3
-                          ? 'Digite pelo menos 3 caracteres'
-                          : null,
                     ),
-                    onChanged: (value) {
-                      setState(() {});
-                      if (value.isEmpty || value.length >= 3) {
-                        Future.delayed(const Duration(milliseconds: 500), () {
-                          if (_searchController.text == value) _applyFilters();
-                        });
-                      }
-                    },
                   ),
-                ),
                 if (_hasActiveFilters) _buildActiveFiltersRow(),
                 Expanded(
                   child: isLoading && transactions.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
+                      ? Center(child: CircularProgressIndicator(color: AppTheme.primaryLight))
                       : transactions.isEmpty
                           ? _buildEmpty()
                           : ListView.builder(
@@ -245,8 +271,9 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 ),
               ],
             ),
+            ),
           ),
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               Navigator.push(
                 context,
@@ -254,7 +281,8 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               );
             },
             backgroundColor: AppTheme.primary,
-            child: const Icon(Icons.add),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Nova'),
           ),
         );
       },
@@ -262,11 +290,11 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   }
 
   Widget _buildActiveFiltersRow() {
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return SizedBox(
+      height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           if (_selectedCategory != null)
             _FilterChip(
@@ -310,7 +338,8 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             ),
           TextButton.icon(
             onPressed: _clearFilters,
-            icon: const Icon(Icons.clear_all, size: 18),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.primaryLight),
+            icon: const Icon(Icons.clear_all_rounded, size: 18),
             label: const Text('Limpar tudo'),
           ),
         ],
@@ -323,14 +352,14 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.receipt_long, size: 64, color: AppTheme.textSecondary),
-          const SizedBox(height: 16),
+          Icon(Icons.receipt_long_rounded, size: 56, color: AppTheme.textSecondary.withValues(alpha: 0.65)),
+          const SizedBox(height: 12),
           Text(
             'Nenhuma transação encontrada',
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge
-                ?.copyWith(color: AppTheme.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ],
       ),
@@ -373,6 +402,8 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Filtros'),
         content: StatefulBuilder(
           builder: (context, setDialogState) => SingleChildScrollView(
@@ -525,9 +556,14 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Chip(
-        label: Text(label),
-        deleteIcon: const Icon(Icons.close, size: 18),
+        label: Text(label, style: Theme.of(context).textTheme.bodySmall),
+        deleteIcon: Icon(Icons.close_rounded, size: 16, color: AppTheme.textSecondary.withValues(alpha: 0.95)),
         onDeleted: onDeleted,
+        backgroundColor: AppTheme.surface.withValues(alpha: 0.92),
+        side: BorderSide(color: AppTheme.gradientBlue.withValues(alpha: 0.28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.only(left: 8, right: 4),
       ),
     );
   }

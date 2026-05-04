@@ -16,72 +16,122 @@ class TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome ? AppTheme.success : AppTheme.error;
-    final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
+    final icon = isIncome ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
+    final dateStr = DateFormat('dd/MM/yyyy').format(transaction.date);
+    final dateStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontSize: 11,
+          height: 1.2,
+          color: AppTheme.textSecondary.withValues(alpha: 0.95),
+        );
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: DecoratedBox(
+        decoration: AppTheme.transactionListItemDecoration,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(transaction.title, style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            transaction.category,
-                            style: Theme.of(context).textTheme.bodySmall,
+                    Container(
+                      width: 3,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(icon, color: color, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            transaction.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          DateFormat('dd/MM/yyyy').format(transaction.date),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  transaction.category,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${isIncome ? '+' : '-'} ${Formatters.formatCurrency(transaction.value)}',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      color: color,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        dateStr,
+                                        style: dateStyle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (transaction.receiptUrl != null) ...[
+                                      const SizedBox(width: 6),
+                                      Icon(
+                                        Icons.receipt_long_outlined,
+                                        color: AppTheme.textSecondary.withValues(alpha: 0.85),
+                                        size: 13,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (onDelete != null)
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: AppTheme.error.withValues(alpha: 0.9),
+                                  ),
+                                  iconSize: 21,
+                                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: onDelete,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${isIncome ? '+' : '-'} ${Formatters.formatCurrency(transaction.value)}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.bold),
-                  ),
-                  if (transaction.receiptUrl != null)
-                    const Icon(Icons.receipt, color: AppTheme.textSecondary, size: 16),
-                ],
-              ),
-              if (onDelete != null) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: AppTheme.error),
-                  onPressed: onDelete,
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),

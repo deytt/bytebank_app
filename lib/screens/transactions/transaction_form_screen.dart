@@ -111,6 +111,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
+  Widget _formSection({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      decoration: AppTheme.formSectionDecoration,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.transaction != null;
@@ -132,133 +144,225 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         final isSubmitting = state is TransactionLoaded && state.isSubmitting;
 
         return Scaffold(
-          appBar: AppBar(title: Text(isEdit ? 'Editar Transação' : 'Nova Transação')),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CustomInput(
-                    label: 'Título',
-                    controller: _titleController,
-                    maxLength: 50,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'Título é obrigatório';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CustomInput(
-                    label: 'Valor',
-                    controller: _valueController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [CurrencyInputFormatter(maxDigits: 8)],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'Valor é obrigatório';
-                      final numValue = Formatters.parseCurrency(value);
-                      if (numValue <= 0) return 'Valor deve ser maior que zero';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
-                  const SizedBox(height: 8),
-                  SegmentedButton<TransactionType>(
-                    segments: const [
-                      ButtonSegment(
-                        value: TransactionType.expense,
-                        label: Text('Despesa'),
-                        icon: Icon(Icons.arrow_downward),
-                      ),
-                      ButtonSegment(
-                        value: TransactionType.income,
-                        label: Text('Receita'),
-                        icon: Icon(Icons.arrow_upward),
-                      ),
-                    ],
-                    selected: {_type},
-                    onSelectionChanged: (newSelection) {
-                      setState(() {
-                        _type = newSelection.first;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Categoria'),
-                    initialValue: _category,
-                    items: _categories.map((category) {
-                      return DropdownMenuItem(value: category, child: Text(category));
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _category = value!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  ListTile(
-                    title: const Text('Data'),
-                    subtitle: Text(Formatters.formatDate(_date)),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: _selectDate,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Recibo (opcional)', style: Theme.of(context).textTheme.labelMedium),
-                  const SizedBox(height: 8),
-                  if (_receiptFile != null)
-                    _ReceiptPreview(
-                      receiptFile: _receiptFile!,
-                      onRemove: () {
-                        setState(() {
-                          _receiptFile = null;
-                        });
-                      },
-                    )
-                  else if (widget.transaction?.receiptUrl != null)
-                    const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Icon(Icons.receipt, color: AppTheme.textSecondary),
-                            SizedBox(width: 8),
-                            Text('Recibo já cadastrado'),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    OutlinedButton.icon(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('Adicionar Recibo'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
+          backgroundColor: AppTheme.background,
+          appBar: AppBar(
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(gradient: AppTheme.transactionAppBarGradient),
+            ),
+            foregroundColor: AppTheme.textPrimary,
+            title: Text(isEdit ? 'Editar Transação' : 'Nova Transação'),
+          ),
+          body: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(gradient: AppTheme.transactionScreenBackgroundGradient),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+                      fillColor: AppTheme.surface.withValues(alpha: 0.55),
                     ),
-                  const SizedBox(height: 24),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isSubmitting ? null : _submit,
-                      child: isSubmitting
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.white,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _formSection(
+                        children: [
+                          CustomInput(
+                            label: 'Título',
+                            controller: _titleController,
+                            maxLength: 50,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Título é obrigatório';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          CustomInput(
+                            label: 'Valor',
+                            controller: _valueController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [CurrencyInputFormatter(maxDigits: 8)],
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Valor é obrigatório';
+                              final numValue = Formatters.parseCurrency(value);
+                              if (numValue <= 0) return 'Valor deve ser maior que zero';
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _formSection(
+                        children: [
+                          Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
+                          const SizedBox(height: 8),
+                          SegmentedButton<TransactionType>(
+                            segments: const [
+                              ButtonSegment(
+                                value: TransactionType.expense,
+                                label: Text('Despesa'),
+                                icon: Icon(Icons.arrow_downward_rounded),
+                              ),
+                              ButtonSegment(
+                                value: TransactionType.income,
+                                label: Text('Receita'),
+                                icon: Icon(Icons.arrow_upward_rounded),
+                              ),
+                            ],
+                            selected: {_type},
+                            onSelectionChanged: (newSelection) {
+                              setState(() {
+                                _type = newSelection.first;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(labelText: 'Categoria'),
+                            initialValue: _category,
+                            items: _categories.map((category) {
+                              return DropdownMenuItem(value: category, child: Text(category));
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _category = value!;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _formSection(
+                        children: [
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _selectDate,
+                              borderRadius: BorderRadius.circular(10),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 20,
+                                      color: AppTheme.textSecondary.withValues(alpha: 0.95),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Data',
+                                            style: Theme.of(context).textTheme.labelMedium,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            Formatters.formatDate(_date),
+                                            style: Theme.of(context).textTheme.bodyLarge,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _formSection(
+                        children: [
+                          Text(
+                            'Recibo (opcional)',
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                          const SizedBox(height: 10),
+                          if (_receiptFile != null)
+                            _ReceiptPreview(
+                              receiptFile: _receiptFile!,
+                              onRemove: () {
+                                setState(() {
+                                  _receiptFile = null;
+                                });
+                              },
+                            )
+                          else if (widget.transaction?.receiptUrl != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface.withValues(alpha: 0.45),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppTheme.primaryLight.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long_outlined,
+                                    color: AppTheme.textSecondary.withValues(alpha: 0.95),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Recibo já cadastrado',
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ],
                               ),
                             )
-                          : Text(isEdit ? 'Atualizar' : 'Adicionar'),
-                    ),
+                          else
+                            OutlinedButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.upload_file_rounded),
+                              label: const Text('Adicionar Recibo'),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 48),
+                                foregroundColor: AppTheme.textPrimary,
+                                side: BorderSide(color: AppTheme.primaryLight.withValues(alpha: 0.45)),
+                                backgroundColor: AppTheme.surface.withValues(alpha: 0.35),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isSubmitting ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 0,
+                          ),
+                          child: isSubmitting
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.white,
+                                  ),
+                                )
+                              : Text(isEdit ? 'Atualizar' : 'Adicionar'),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -280,34 +384,41 @@ class _ReceiptPreview extends StatelessWidget {
       future: receiptFile.readAsBytes(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-          return Stack(
-            children: [
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(
-                    image: MemoryImage(snapshot.data!),
-                    fit: BoxFit.cover,
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.25)),
+                    image: DecorationImage(
+                      image: MemoryImage(snapshot.data!),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: AppTheme.white),
-                  onPressed: onRemove,
-                  style: IconButton.styleFrom(backgroundColor: AppTheme.black.withValues(alpha: 0.54)),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.white),
+                    onPressed: onRemove,
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppTheme.black.withValues(alpha: 0.54),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         }
-        return const SizedBox(
+        return SizedBox(
           height: 200,
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(
+            child: CircularProgressIndicator(color: AppTheme.primaryLight),
+          ),
         );
       },
     );
