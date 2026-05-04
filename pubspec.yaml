@@ -64,6 +64,7 @@ dependencies:
   flutter_svg: ^2.0.16
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  get_it: ^9.2.1
 
 dev_dependencies:
   flutter_test:
