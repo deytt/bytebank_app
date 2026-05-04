@@ -6,7 +6,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/transactions/presentation/bloc/transaction_bloc.dart';
-import '../../models/transaction_model.dart';
+import '../../features/transactions/data/models/transaction_model.dart';
+import '../../features/transactions/domain/entities/transaction.dart' show TransactionType;
 import '../../widgets/custom_input.dart';
 
 class TransactionFormScreen extends StatefulWidget {
@@ -296,9 +297,9 @@ class _ReceiptPreview extends StatelessWidget {
                 top: 8,
                 right: 8,
                 child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close, color: AppTheme.white),
                   onPressed: onRemove,
-                  style: IconButton.styleFrom(backgroundColor: Colors.black54),
+                  style: IconButton.styleFrom(backgroundColor: AppTheme.black.withValues(alpha: 0.54)),
                 ),
               ),
             ],

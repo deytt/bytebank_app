@@ -79,7 +79,7 @@ class DashboardStoriesSection extends StatelessWidget {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black,
+      barrierColor: AppTheme.black,
       transitionDuration: const Duration(milliseconds: 300),
       transitionBuilder: (ctx, anim, _, child) {
         return FadeTransition(
@@ -211,7 +211,7 @@ class _StoryViewerState extends State<_StoryViewer> with SingleTickerProviderSta
             colors: [
               item.gradientColors[0],
               item.gradientColors[1],
-              Colors.black.withValues(alpha: 0.6),
+              AppTheme.black.withValues(alpha: 0.6),
             ],
             stops: const [0.0, 0.55, 1.0],
           ),

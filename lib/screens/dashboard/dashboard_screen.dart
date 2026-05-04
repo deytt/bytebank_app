@@ -70,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     StoryItemData(
       label: 'Cashback',
       icon: Icons.card_giftcard,
-      gradientColors: [Color(0xFF4C1D95), Color(0xFF6D28D9)],
+      gradientColors: [AppTheme.primary, AppTheme.primaryLight],
       offerTitle: 'Cashback especial',
       offerSubtitle:
           'Ganhe até 5% de volta em compras online selecionadas. Ative agora e aproveite nas suas lojas favoritas.',
@@ -79,7 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     StoryItemData(
       label: 'Empréstimo',
       icon: Icons.attach_money,
-      gradientColors: [Color(0xFF1E3A5F), Color(0xFF2563EB)],
+      gradientColors: [AppTheme.gradientBlueDark, AppTheme.gradientBlue],
       offerTitle: 'Empréstimo pessoal',
       offerSubtitle:
           'Taxas a partir de 1,29% a.m. com aprovação em minutos. Simule agora sem comprometer seu score.',
@@ -88,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     StoryItemData(
       label: 'Conta',
       icon: Icons.account_balance_wallet,
-      gradientColors: [Color(0xFF064E3B), Color(0xFF059669)],
+      gradientColors: [AppTheme.gradientGreenDark, AppTheme.gradientGreen],
       offerTitle: 'Conta digital grátis',
       offerSubtitle:
           'Sem tarifas de manutenção e com rendimento automático. Indique amigos e ganhe bônus exclusivos.',
@@ -97,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     StoryItemData(
       label: 'Investir',
       icon: Icons.trending_up,
-      gradientColors: [Color(0xFF78350F), Color(0xFFD97706)],
+      gradientColors: [AppTheme.gradientAmberDark, AppTheme.gradientAmber],
       offerTitle: 'Invista agora',
       offerSubtitle:
           'Rendimento de até 120% do CDI com liquidez diária. Comece com qualquer valor e veja seu dinheiro crescer.',

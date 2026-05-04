@@ -27,10 +27,10 @@ class _DashboardBalanceCardState extends State<DashboardBalanceCard> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [const Color(0xFF0D3B5E).withValues(alpha: 0.55), AppTheme.surface],
+          colors: [AppTheme.balanceSurface.withValues(alpha: 0.55), AppTheme.surface],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.20)),
+        border: Border.all(color: AppTheme.gradientBlue.withValues(alpha: 0.20)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),

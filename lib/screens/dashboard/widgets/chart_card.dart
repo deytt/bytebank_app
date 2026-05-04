@@ -27,8 +27,8 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     AppTheme.primaryLight,
     AppTheme.success,
     AppTheme.error,
-    Color(0xFF3B82F6),
-    Color(0xFFF59E0B),
+    AppTheme.chartBlue,
+    AppTheme.chartAmber,
     AppTheme.textSecondary,
   ];
 

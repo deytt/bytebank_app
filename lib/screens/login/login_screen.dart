@@ -318,13 +318,13 @@ class _GoogleIcon extends StatelessWidget {
       height: 22,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
+        color: AppTheme.white,
       ),
       child: const Center(
         child: Text(
           'G',
           style: TextStyle(
-            color: Color(0xFF4285F4),
+            color: AppTheme.googleBlue,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),

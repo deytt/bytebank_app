@@ -33,25 +33,25 @@ class _DashboardCarouselSectionState extends State<DashboardCarouselSection> {
       title: 'Cashback especial',
       subtitle: 'Ganhe até 5% de volta em compras online selecionadas',
       icon: Icons.card_giftcard,
-      gradientColors: [Color(0xFF4C1D95), Color(0xFF6D28D9)],
+      gradientColors: [AppTheme.primary, AppTheme.primaryLight],
     ),
     CarouselItemData(
       title: 'Empréstimo pessoal',
       subtitle: 'Taxas a partir de 1,29% a.m. com aprovação em minutos',
       icon: Icons.attach_money,
-      gradientColors: [Color(0xFF1E3A5F), Color(0xFF2563EB)],
+      gradientColors: [AppTheme.gradientBlueDark, AppTheme.gradientBlue],
     ),
     CarouselItemData(
       title: 'Conta digital grátis',
       subtitle: 'Sem tarifas de manutenção e com rendimento automático',
       icon: Icons.account_balance_wallet,
-      gradientColors: [Color(0xFF064E3B), Color(0xFF059669)],
+      gradientColors: [AppTheme.gradientGreenDark, AppTheme.gradientGreen],
     ),
     CarouselItemData(
       title: 'Invista agora',
       subtitle: 'Rendimento de até 120% do CDI com liquidez diária',
       icon: Icons.trending_up,
-      gradientColors: [Color(0xFF78350F), Color(0xFFD97706)],
+      gradientColors: [AppTheme.gradientAmberDark, AppTheme.gradientAmber],
     ),
   ];
 
