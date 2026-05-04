@@ -116,9 +116,6 @@ lib/
 │   └── utils/
 │       ├── encryption_service.dart              # Serviço AES-256 CBC (chave por dispositivo)
 │       └── formatters.dart                      # Formatadores de data e moeda
-├── models/                                       # Re-exports de compatibilidade
-│   ├── transaction_model.dart
-│   └── user_model.dart
 ├── features/
 │   ├── auth/
 │   │   ├── domain/
@@ -198,6 +195,11 @@ flutter build apk --release
 # Build iOS
 flutter build ios --release
 ```
+
+## Documentação Técnica
+
+Para detalhes sobre as tecnologias, conceitos e decisões de implementação por área:
+[docs/TECHNICAL.md](docs/TECHNICAL.md)
 
 ## Licença
 
