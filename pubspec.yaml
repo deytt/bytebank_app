@@ -54,9 +54,6 @@ dependencies:
   encrypt: ^5.0.3
   flutter_secure_storage: ^9.2.2
 
-  # Reactive
-  rxdart: ^0.28.0
-
   # UI
   fl_chart: ^0.70.2
   intl: ^0.20.1
