@@ -53,7 +53,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCxq7FRyBAhQyuGvsd5iT2k9XebCgNFfqo',
-    appId: '1:1093070321011:ios:eec8e4131fecade46cc106',
+    appId: '1:1093070321011:ios:3605445ca12d7a866cc106',
     messagingSenderId: '1093070321011',
     projectId: 'bytebank-2778e',
     storageBucket: 'bytebank-2778e.firebasestorage.app',
