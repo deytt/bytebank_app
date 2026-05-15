@@ -113,7 +113,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       StoryItemData(
         label: 'Tag',
         icon: Icons.directions_car,
-        gradientColors: const [Color(0xFF0C4A6E), Color(0xFF0284C7)],
+        gradientColors: [t.gradientSkyDark, t.gradientSky],
         offerTitle: 'Tag de pedágio',
         offerSubtitle:
             'Passe sem parar em pedágios e estacionamentos em todo o Brasil. Peça a sua Tag gratuita agora.',
@@ -122,7 +122,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       StoryItemData(
         label: 'Livelo',
         icon: Icons.star_rounded,
-        gradientColors: const [Color(0xFF7C2D12), Color(0xFFEA580C)],
+        gradientColors: [t.gradientOrangeDark, t.gradientOrange],
         offerTitle: 'Pontos Livelo',
         offerSubtitle:
             'Acumule pontos em cada compra e troque por passagens, produtos e experiências incríveis.',
@@ -373,6 +373,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       );
                     },
                     backgroundColor: t.primary,
+                    foregroundColor: t.white,
                     icon: const Icon(Icons.list),
                     label: const Text('Transações'),
                   ),

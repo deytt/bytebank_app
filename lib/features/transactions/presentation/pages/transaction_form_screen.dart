@@ -208,6 +208,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           Text('Tipo', style: Theme.of(context).textTheme.labelMedium),
                           const SizedBox(height: 8),
                           SegmentedButton<TransactionType>(
+                            style: SegmentedButton.styleFrom(
+                              selectedBackgroundColor: t.primary,
+                              selectedForegroundColor: t.white,
+                              foregroundColor: t.textPrimary,
+                              backgroundColor: t.transactionCardFill,
+                              side: BorderSide(color: t.neutralBorder),
+                            ),
                             segments: const [
                               ButtonSegment(
                                 value: TransactionType.expense,

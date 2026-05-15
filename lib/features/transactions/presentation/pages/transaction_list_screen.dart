@@ -60,15 +60,12 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   void _loadInitial() {
     final uid = _userId;
     if (uid != null) {
-      context.read<TransactionBloc>().add(
-            LoadTransactions(userId: uid, refresh: true),
-          );
+      context.read<TransactionBloc>().add(LoadTransactions(userId: uid, refresh: true));
     }
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.8) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
       context.read<TransactionBloc>().add(const LoadMoreTransactions());
     }
   }
@@ -81,16 +78,16 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     final searchTitle = (searchText.isEmpty || searchText.length < 3) ? null : searchText;
 
     context.read<TransactionBloc>().add(
-          LoadTransactions(
-            userId: uid,
-            category: _selectedCategory,
-            searchTitle: searchTitle,
-            hasReceipt: _hasReceipt,
-            dateRangeDays: _selectedDateRange,
-            type: _selectedType,
-            refresh: true,
-          ),
-        );
+      LoadTransactions(
+        userId: uid,
+        category: _selectedCategory,
+        searchTitle: searchTitle,
+        hasReceipt: _hasReceipt,
+        dateRangeDays: _selectedDateRange,
+        type: _selectedType,
+        refresh: true,
+      ),
+    );
   }
 
   void _clearFilters() {
@@ -117,19 +114,13 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       listener: (context, state) {
         if (state is TransactionActionSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              duration: const Duration(seconds: 2),
-            ),
+            SnackBar(content: Text(state.message), duration: const Duration(seconds: 2)),
           );
         } else if (state is TransactionActionFailure) {
           final te = AppTheme.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: te.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: te.error));
         }
       },
       builder: (context, state) {
@@ -137,10 +128,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         final loaded = state is TransactionLoaded
             ? state
             : state is TransactionActionSuccess
-                ? state.data
-                : state is TransactionActionFailure
-                    ? state.data
-                    : null;
+            ? state.data
+            : state is TransactionActionFailure
+            ? state.data
+            : null;
 
         final transactions = loaded?.transactions ?? [];
         final isLoading = state is TransactionLoading;
@@ -185,10 +176,16 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                         decoration: InputDecoration(
                           hintText: 'Buscar por título (mín. 3 caracteres)...',
                           hintStyle: TextStyle(color: t.textSecondary.withValues(alpha: 0.85)),
-                          prefixIcon: Icon(Icons.search_rounded, color: t.textSecondary.withValues(alpha: 0.9)),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: t.textSecondary.withValues(alpha: 0.9),
+                          ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: Icon(Icons.close_rounded, color: t.textSecondary.withValues(alpha: 0.9)),
+                                  icon: Icon(
+                                    Icons.close_rounded,
+                                    color: t.textSecondary.withValues(alpha: 0.9),
+                                  ),
                                   onPressed: () {
                                     _searchController.clear();
                                     _applyFilters();
@@ -197,15 +194,21 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                               : null,
                           filled: true,
                           fillColor: Colors.transparent,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: t.primaryLight.withValues(alpha: 0.45)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                          helperText: _searchController.text.isNotEmpty &&
-                                  _searchController.text.length < 3
+                          helperText:
+                              _searchController.text.isNotEmpty && _searchController.text.length < 3
                               ? 'Digite pelo menos 3 caracteres'
                               : null,
                           helperStyle: Theme.of(context).textTheme.bodySmall,
@@ -221,58 +224,57 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                       ),
                     ),
                   ),
-                if (_hasActiveFilters) _buildActiveFiltersRow(),
-                Expanded(
-                  child: isLoading && transactions.isEmpty
-                      ? Center(child: CircularProgressIndicator(color: t.primaryLight))
-                      : transactions.isEmpty
-                          ? _buildEmpty()
-                          : ListView.builder(
-                              controller: _scrollController,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: transactions.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index == transactions.length) {
-                                  if (isLoadingMore) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(child: CircularProgressIndicator()),
-                                    );
-                                  }
-                                  if (!hasMore) {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Center(
-                                        child: Text(
-                                          'Todas as transações foram carregadas',
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
+                  if (_hasActiveFilters) _buildActiveFiltersRow(),
+                  Expanded(
+                    child: isLoading && transactions.isEmpty
+                        ? Center(child: CircularProgressIndicator(color: t.primaryLight))
+                        : transactions.isEmpty
+                        ? _buildEmpty()
+                        : ListView.builder(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: transactions.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index == transactions.length) {
+                                if (isLoadingMore) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
                                 }
-
-                                final transaction = transactions[index];
-                                return TransactionCard(
-                                  transaction: transaction,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => TransactionFormScreen(
-                                          transaction: transaction,
-                                        ),
+                                if (!hasMore) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Center(
+                                      child: Text(
+                                        'Todas as transações foram carregadas',
+                                        style: Theme.of(context).textTheme.bodySmall,
                                       ),
-                                    );
-                                  },
-                                  onDelete: () => _confirmDelete(context, transaction),
-                                );
-                              },
-                            ),
-                ),
-              ],
-            ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }
+
+                              final transaction = transactions[index];
+                              return TransactionCard(
+                                transaction: transaction,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          TransactionFormScreen(transaction: transaction),
+                                    ),
+                                  );
+                                },
+                                onDelete: () => _confirmDelete(context, transaction),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
           floatingActionButton: FloatingActionButton.extended(
@@ -283,8 +285,9 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               );
             },
             backgroundColor: t.primary,
+            foregroundColor: t.white,
             icon: const Icon(Icons.add_rounded),
-            label: const Text('Nova'),
+            label: const Text('Nova Transação'),
           ),
         );
       },
@@ -341,7 +344,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             ),
           TextButton.icon(
             onPressed: _clearFilters,
-            style: TextButton.styleFrom(foregroundColor: t.primaryLight),
+            style: TextButton.styleFrom(foregroundColor: t.actionForeground),
             icon: const Icon(Icons.clear_all_rounded, size: 18),
             label: const Text('Limpar tudo'),
           ),
@@ -356,14 +359,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_rounded, size: 56, color: t.textSecondary.withValues(alpha: 0.65)),
+          Icon(
+            Icons.receipt_long_rounded,
+            size: 56,
+            color: t.textSecondary.withValues(alpha: 0.65),
+          ),
           const SizedBox(height: 12),
           Text(
             'Nenhuma transação encontrada',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: t.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: t.textSecondary, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -381,10 +387,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
-              ),
+              child: Text('Cancelar', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -397,10 +400,32 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     );
 
     if (confirm == true && context.mounted) {
-      context.read<TransactionBloc>().add(
-            DeleteTransactionRequested(transaction),
-          );
+      context.read<TransactionBloc>().add(DeleteTransactionRequested(transaction));
     }
+  }
+
+  ChoiceChip _buildFilterChoiceChip(
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required ValueChanged<bool> onSelected,
+  }) {
+    final t = AppTheme.of(context);
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: selected ? t.white : t.textPrimary,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+      selected: selected,
+      showCheckmark: false,
+      selectedColor: t.primary,
+      backgroundColor: t.transactionCardFill,
+      side: BorderSide(color: selected ? t.primary : t.neutralBorder),
+      onSelected: onSelected,
+    );
   }
 
   void _showFilterDialog() {
@@ -414,148 +439,154 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       builder: (context) {
         final td = AppTheme.of(context);
         return AlertDialog(
-        backgroundColor: td.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Filtros'),
-        content: StatefulBuilder(
-          builder: (context, setDialogState) => SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Categoria', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Todas'),
-                      selected: tempCategory == null,
-                      onSelected: (_) => setDialogState(() => tempCategory = null),
-                    ),
-                    ..._categories.map((category) => ChoiceChip(
-                          label: Text(category),
+          backgroundColor: td.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Filtros'),
+          content: StatefulBuilder(
+            builder: (context, setDialogState) => SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Categoria', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Todas',
+                        selected: tempCategory == null,
+                        onSelected: (_) => setDialogState(() => tempCategory = null),
+                      ),
+                      ..._categories.map(
+                        (category) => _buildFilterChoiceChip(
+                          context,
+                          label: category,
                           selected: tempCategory == category,
-                          onSelected: (selected) => setDialogState(
-                            () => tempCategory = selected ? category : null,
-                          ),
-                        )),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text('Recibo', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Todos'),
-                      selected: tempHasReceipt == null,
-                      onSelected: (_) => setDialogState(() => tempHasReceipt = null),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Com recibo'),
-                      selected: tempHasReceipt == true,
-                      onSelected: (s) =>
-                          setDialogState(() => tempHasReceipt = s ? true : null),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Sem recibo'),
-                      selected: tempHasReceipt == false,
-                      onSelected: (s) =>
-                          setDialogState(() => tempHasReceipt = s ? false : null),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text('Período', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Todos'),
-                      selected: tempDateRange == null,
-                      onSelected: (_) => setDialogState(() => tempDateRange = null),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Últimos 15 dias'),
-                      selected: tempDateRange == 15,
-                      onSelected: (s) =>
-                          setDialogState(() => tempDateRange = s ? 15 : null),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Últimos 30 dias'),
-                      selected: tempDateRange == 30,
-                      onSelected: (s) =>
-                          setDialogState(() => tempDateRange = s ? 30 : null),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Últimos 90 dias'),
-                      selected: tempDateRange == 90,
-                      onSelected: (s) =>
-                          setDialogState(() => tempDateRange = s ? 90 : null),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text('Tipo', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Todos'),
-                      selected: tempType == null,
-                      onSelected: (_) => setDialogState(() => tempType = null),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Receita'),
-                      selected: tempType == TransactionType.income,
-                      onSelected: (s) => setDialogState(
-                        () => tempType = s ? TransactionType.income : null,
+                          onSelected: (selected) =>
+                              setDialogState(() => tempCategory = selected ? category : null),
+                        ),
                       ),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Despesa'),
-                      selected: tempType == TransactionType.expense,
-                      onSelected: (s) => setDialogState(
-                        () => tempType = s ? TransactionType.expense : null,
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Recibo', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Todos',
+                        selected: tempHasReceipt == null,
+                        onSelected: (_) => setDialogState(() => tempHasReceipt = null),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Com recibo',
+                        selected: tempHasReceipt == true,
+                        onSelected: (s) => setDialogState(() => tempHasReceipt = s ? true : null),
+                      ),
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Sem recibo',
+                        selected: tempHasReceipt == false,
+                        onSelected: (s) => setDialogState(() => tempHasReceipt = s ? false : null),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Período', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Todos',
+                        selected: tempDateRange == null,
+                        onSelected: (_) => setDialogState(() => tempDateRange = null),
+                      ),
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Últimos 15 dias',
+                        selected: tempDateRange == 15,
+                        onSelected: (s) => setDialogState(() => tempDateRange = s ? 15 : null),
+                      ),
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Últimos 30 dias',
+                        selected: tempDateRange == 30,
+                        onSelected: (s) => setDialogState(() => tempDateRange = s ? 30 : null),
+                      ),
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Últimos 90 dias',
+                        selected: tempDateRange == 90,
+                        onSelected: (s) => setDialogState(() => tempDateRange = s ? 90 : null),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Tipo', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Todos',
+                        selected: tempType == null,
+                        onSelected: (_) => setDialogState(() => tempType = null),
+                      ),
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Receita',
+                        selected: tempType == TransactionType.income,
+                        onSelected: (s) =>
+                            setDialogState(() => tempType = s ? TransactionType.income : null),
+                      ),
+                      _buildFilterChoiceChip(
+                        context,
+                        label: 'Despesa',
+                        selected: tempType == TransactionType.expense,
+                        onSelected: (s) =>
+                            setDialogState(() => tempType = s ? TransactionType.expense : null),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancelar',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _selectedCategory = tempCategory;
-                _hasReceipt = tempHasReceipt;
-                _selectedDateRange = tempDateRange;
-                _selectedType = tempType;
-              });
-              Navigator.pop(context);
-              _applyFilters();
-            },
-            child: const Text('Aplicar'),
-          ),
-        ],
-      );
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedCategory = tempCategory;
+                  _hasReceipt = tempHasReceipt;
+                  _selectedDateRange = tempDateRange;
+                  _selectedType = tempType;
+                });
+                Navigator.pop(context);
+                _applyFilters();
+              },
+              child: const Text('Aplicar'),
+            ),
+          ],
+        );
       },
     );
   }
@@ -573,11 +604,16 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Chip(
-        label: Text(label, style: Theme.of(context).textTheme.bodySmall),
-        deleteIcon: Icon(Icons.close_rounded, size: 16, color: t.textSecondary.withValues(alpha: 0.95)),
+        label: Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: t.white, fontWeight: FontWeight.w600),
+        ),
+        deleteIcon: Icon(Icons.close_rounded, size: 16, color: t.white),
         onDeleted: onDeleted,
-        backgroundColor: t.surface.withValues(alpha: 0.92),
-        side: BorderSide(color: t.gradientBlue.withValues(alpha: 0.28)),
+        backgroundColor: t.primary,
+        side: BorderSide(color: t.primary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.only(left: 8, right: 4),

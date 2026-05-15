@@ -82,8 +82,12 @@ class UserAccountModal extends StatelessWidget {
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: TextButton(
+            child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: t.primary,
+                foregroundColor: t.white,
+              ),
               child: const Text('Fechar'),
             ),
           ),

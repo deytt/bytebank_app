@@ -8,6 +8,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
   final Color surface;
   final Color textPrimary;
   final Color textSecondary;
+  final Color actionForeground;
   final Color white;
   final Color success;
   final Color error;
@@ -19,6 +20,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
   final Color gradientGreen;
   final Color gradientAmberDark;
   final Color gradientAmber;
+  final Color gradientSkyDark;
+  final Color gradientSky;
+  final Color gradientOrangeDark;
+  final Color gradientOrange;
   final Color balanceSurface;
   final Color chartBlue;
   final Color chartAmber;
@@ -34,6 +39,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
     required this.surface,
     required this.textPrimary,
     required this.textSecondary,
+    required this.actionForeground,
     required this.white,
     required this.success,
     required this.error,
@@ -45,6 +51,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
     required this.gradientGreen,
     required this.gradientAmberDark,
     required this.gradientAmber,
+    required this.gradientSkyDark,
+    required this.gradientSky,
+    required this.gradientOrangeDark,
+    required this.gradientOrange,
     required this.balanceSurface,
     required this.chartBlue,
     required this.chartAmber,
@@ -62,6 +72,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       surface: Color(0xFF202024),
       textPrimary: Color(0xFFE1E1E6),
       textSecondary: Color(0xFFC4C4CC),
+      actionForeground: Color(0xFFFFFFFF),
       white: Color(0xFFFFFFFF),
       success: Color(0xFF22C55E),
       error: Color(0xFFEF4444),
@@ -73,6 +84,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       gradientGreen: Color(0xFF059669),
       gradientAmberDark: Color(0xFF78350F),
       gradientAmber: Color(0xFFD97706),
+      gradientSkyDark: Color(0xFF0C4A6E),
+      gradientSky: Color(0xFF0284C7),
+      gradientOrangeDark: Color(0xFF7C2D12),
+      gradientOrange: Color(0xFFEA580C),
       balanceSurface: Color(0xFF0D3B5E),
       chartBlue: Color(0xFF3B82F6),
       chartAmber: Color(0xFFF59E0B),
@@ -91,6 +106,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       surface: Color(0xFFFFFFFF),
       textPrimary: Color(0xFF18181B),
       textSecondary: Color(0xFF71717A),
+      actionForeground: Color(0xFF4C1D95),
       white: Color(0xFFFFFFFF),
       success: Color(0xFF22C55E),
       error: Color(0xFFEF4444),
@@ -102,6 +118,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       gradientGreen: Color(0xFF059669),
       gradientAmberDark: Color(0xFF78350F),
       gradientAmber: Color(0xFFD97706),
+      gradientSkyDark: Color(0xFF0C4A6E),
+      gradientSky: Color(0xFF0284C7),
+      gradientOrangeDark: Color(0xFF7C2D12),
+      gradientOrange: Color(0xFFEA580C),
       balanceSurface: Color(0xFFBFDBFE),
       chartBlue: Color(0xFF3B82F6),
       chartAmber: Color(0xFFF59E0B),
@@ -152,6 +172,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
     Color? surface,
     Color? textPrimary,
     Color? textSecondary,
+    Color? actionForeground,
     Color? white,
     Color? success,
     Color? error,
@@ -163,6 +184,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
     Color? gradientGreen,
     Color? gradientAmberDark,
     Color? gradientAmber,
+    Color? gradientSkyDark,
+    Color? gradientSky,
+    Color? gradientOrangeDark,
+    Color? gradientOrange,
     Color? balanceSurface,
     Color? chartBlue,
     Color? chartAmber,
@@ -178,6 +203,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       surface: surface ?? this.surface,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
+      actionForeground: actionForeground ?? this.actionForeground,
       white: white ?? this.white,
       success: success ?? this.success,
       error: error ?? this.error,
@@ -189,6 +215,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       gradientGreen: gradientGreen ?? this.gradientGreen,
       gradientAmberDark: gradientAmberDark ?? this.gradientAmberDark,
       gradientAmber: gradientAmber ?? this.gradientAmber,
+      gradientSkyDark: gradientSkyDark ?? this.gradientSkyDark,
+      gradientSky: gradientSky ?? this.gradientSky,
+      gradientOrangeDark: gradientOrangeDark ?? this.gradientOrangeDark,
+      gradientOrange: gradientOrange ?? this.gradientOrange,
       balanceSurface: balanceSurface ?? this.balanceSurface,
       chartBlue: chartBlue ?? this.chartBlue,
       chartAmber: chartAmber ?? this.chartAmber,
@@ -209,6 +239,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       surface: Color.lerp(surface, other.surface, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      actionForeground: Color.lerp(actionForeground, other.actionForeground, t)!,
       white: Color.lerp(white, other.white, t)!,
       success: Color.lerp(success, other.success, t)!,
       error: Color.lerp(error, other.error, t)!,
@@ -220,6 +251,10 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       gradientGreen: Color.lerp(gradientGreen, other.gradientGreen, t)!,
       gradientAmberDark: Color.lerp(gradientAmberDark, other.gradientAmberDark, t)!,
       gradientAmber: Color.lerp(gradientAmber, other.gradientAmber, t)!,
+      gradientSkyDark: Color.lerp(gradientSkyDark, other.gradientSkyDark, t)!,
+      gradientSky: Color.lerp(gradientSky, other.gradientSky, t)!,
+      gradientOrangeDark: Color.lerp(gradientOrangeDark, other.gradientOrangeDark, t)!,
+      gradientOrange: Color.lerp(gradientOrange, other.gradientOrange, t)!,
       balanceSurface: Color.lerp(balanceSurface, other.balanceSurface, t)!,
       chartBlue: Color.lerp(chartBlue, other.chartBlue, t)!,
       chartAmber: Color.lerp(chartAmber, other.chartAmber, t)!,
