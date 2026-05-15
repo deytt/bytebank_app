@@ -162,7 +162,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             decoration: BoxDecoration(gradient: t.transactionScreenBackgroundGradient),
             child: RefreshIndicator(
               color: t.primaryLight,
-              onRefresh: () async => _loadInitial(),
+              onRefresh: () async => _clearFilters(),
               child: Column(
                 children: [
                   Padding(

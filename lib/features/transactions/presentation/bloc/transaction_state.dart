@@ -18,16 +18,16 @@ class TransactionLoading extends TransactionState {
 class TransactionLoaded extends TransactionState {
   final List<TransactionModel> transactions;
 
-  /// Recent transactions used for chart rendering (capped at 200).
   final List<TransactionModel> allTransactions;
 
-  /// Totals from Firestore aggregation queries — not computed from allTransactions.
   final double totalIncome;
   final double totalExpense;
 
   final bool hasMore;
   final bool isLoadingMore;
   final bool isSubmitting;
+
+  final bool isFromCache;
 
   const TransactionLoaded({
     required this.transactions,
@@ -37,6 +37,7 @@ class TransactionLoaded extends TransactionState {
     this.hasMore = false,
     this.isLoadingMore = false,
     this.isSubmitting = false,
+    this.isFromCache = false,
   });
 
   double get balance => totalIncome - totalExpense;
@@ -49,6 +50,7 @@ class TransactionLoaded extends TransactionState {
     bool? hasMore,
     bool? isLoadingMore,
     bool? isSubmitting,
+    bool? isFromCache,
   }) {
     return TransactionLoaded(
       transactions: transactions ?? this.transactions,
@@ -58,6 +60,7 @@ class TransactionLoaded extends TransactionState {
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isFromCache: isFromCache ?? this.isFromCache,
     );
   }
 
@@ -70,6 +73,7 @@ class TransactionLoaded extends TransactionState {
         hasMore,
         isLoadingMore,
         isSubmitting,
+        isFromCache,
       ];
 }
 
@@ -95,9 +99,11 @@ class TransactionActionSuccess extends TransactionState {
 class TransactionActionFailure extends TransactionState {
   final String message;
   final TransactionLoaded? data;
+  final DateTime timestamp;
 
-  const TransactionActionFailure({required this.message, this.data});
+  TransactionActionFailure({required this.message, this.data})
+      : timestamp = DateTime.now();
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, timestamp];
 }

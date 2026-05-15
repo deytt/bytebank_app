@@ -3,6 +3,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/utils/encryption_service.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../models/transaction_model.dart';
@@ -14,29 +15,24 @@ class TransactionRepositoryImpl implements TransactionRepository {
   static const String _collection = 'transactions';
   static const int _maxUploadSizeBytes = 30 * 1024 * 1024;
 
-  /// Returns the Hive box name for a given user's transaction cache.
   String _boxName(String userId) => 'tx_$userId';
 
-  /// Converts a TransactionModel to a cache-safe map (no Firestore types).
   Map<String, dynamic> _toCacheMap(TransactionModel model) {
     final map = model.toMap();
     return {
       ...map,
       'id': model.id,
-      // Replace Timestamp with int so Hive can persist it
       'date': model.date.millisecondsSinceEpoch,
     };
   }
 
-  /// Builds a TransactionModel from a cache map.
   TransactionModel _fromCacheMap(Map map) {
     final raw = Map<String, dynamic>.from(map);
     final dateMs = raw['date'] as int;
     return TransactionModel(
       id: raw['id'] as String?,
       userId: raw['userId'] as String,
-      // title is stored encrypted; fromMap handles decryption via EncryptionService
-      title: raw['title'] as String,
+      title: EncryptionService().decrypt(raw['title'] as String? ?? ''),
       value: (raw['value'] as num).toDouble(),
       category: raw['category'] as String,
       type: raw['type'] == 'income' ? TransactionType.income : TransactionType.expense,
@@ -51,14 +47,26 @@ class TransactionRepositoryImpl implements TransactionRepository {
     return Hive.openBox(name);
   }
 
-  Future<void> _saveToCache(String userId, List<TransactionModel> models) async {
+  Future<void> _saveToCache(
+    String userId,
+    List<TransactionModel> models, {
+    ({double totalIncome, double totalExpense})? aggregates,
+    List<TransactionModel>? chartTransactions,
+  }) async {
     try {
       final box = await _openBox(userId);
-      final maps = models.map(_toCacheMap).toList();
-      await box.put('transactions', maps);
-    } catch (_) {
-      // Cache write failure must never break the main flow
-    }
+      await box.put('transactions', models.map(_toCacheMap).toList());
+      if (aggregates != null) {
+        await box.put('aggregates', {
+          'totalIncome': aggregates.totalIncome,
+          'totalExpense': aggregates.totalExpense,
+          'savedAt': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+      if (chartTransactions != null) {
+        await box.put('chart_transactions', chartTransactions.map(_toCacheMap).toList());
+      }
+    } catch (_) {}
   }
 
   Future<List<TransactionModel>> _readFromCache(String userId) async {
@@ -72,10 +80,39 @@ class TransactionRepositoryImpl implements TransactionRepository {
     }
   }
 
+  Future<({double totalIncome, double totalExpense})?> _readAggregatesFromCache(
+    String userId,
+  ) async {
+    try {
+      final box = await _openBox(userId);
+      final cached = box.get('aggregates') as Map?;
+      if (cached == null) return null;
+      return (
+        totalIncome: (cached['totalIncome'] as num).toDouble(),
+        totalExpense: (cached['totalExpense'] as num).toDouble(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<TransactionModel>> _readChartFromCache(String userId) async {
+    try {
+      final box = await _openBox(userId);
+      final cached = box.get('chart_transactions');
+      if (cached == null) return [];
+      return (cached as List).map((e) => _fromCacheMap(e as Map)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<void> _clearCache(String userId) async {
     try {
       final box = await _openBox(userId);
       await box.delete('transactions');
+      await box.delete('aggregates');
+      await box.delete('chart_transactions');
     } catch (_) {}
   }
 
@@ -92,9 +129,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }) async {
     try {
       final hasLocalFilter =
-          (searchTitle != null && searchTitle.isNotEmpty) ||
-          hasReceipt != null ||
-          type != null;
+          (searchTitle != null && searchTitle.isNotEmpty) || hasReceipt != null || type != null;
       final effectiveLimit = hasLocalFilter ? 1000 : limit;
 
       Query query = _firestore
@@ -116,7 +151,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
         query = query.where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.get().timeout(const Duration(seconds: 5));
 
       List<TransactionModel> transactions = snapshot.docs
           .map((doc) => TransactionModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
@@ -138,10 +173,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
         transactions = transactions.where((t) => t.type == type).toList();
       }
 
-      // Persist first unfiltered page to cache for offline access
       final isFirstPage = pageToken == null && !hasLocalFilter;
       if (isFirstPage) {
-        await _saveToCache(userId, transactions);
+        if (limit > 20) {
+          await _saveToCache(userId, [], chartTransactions: transactions);
+        } else {
+          await _saveToCache(userId, transactions);
+        }
       }
 
       return TransactionPage(
@@ -150,11 +188,16 @@ class TransactionRepositoryImpl implements TransactionRepository {
         cursor: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
       );
     } catch (e) {
-      // Firestore unreachable — serve cached data if available
       if (pageToken == null) {
         final cached = await _readFromCache(userId);
         if (cached.isNotEmpty) {
           return TransactionPage(transactions: cached, hasMore: false, cursor: null);
+        }
+        if (limit > 20) {
+          final chartCached = await _readChartFromCache(userId);
+          if (chartCached.isNotEmpty) {
+            return TransactionPage(transactions: chartCached, hasMore: false, cursor: null);
+          }
         }
       }
       throw Exception('Erro ao carregar transações');
@@ -176,10 +219,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
               date: transaction.date,
               receiptUrl: transaction.receiptUrl,
             );
-      await _firestore.collection(_collection).add(model.toMap());
+      await _firestore
+          .collection(_collection)
+          .add(model.toMap())
+          .timeout(const Duration(seconds: 5));
       await _clearCache(model.userId);
     } catch (e) {
-      throw Exception('Erro ao adicionar transação');
+      debugPrint('add error: $e');
+      throw Exception('Sem conexão. Verifique sua internet e tente novamente.');
     }
   }
 
@@ -199,63 +246,77 @@ class TransactionRepositoryImpl implements TransactionRepository {
               date: transaction.date,
               receiptUrl: transaction.receiptUrl,
             );
-      await _firestore.collection(_collection).doc(transaction.id).update(model.toMap());
+      await _firestore
+          .collection(_collection)
+          .doc(transaction.id)
+          .update(model.toMap())
+          .timeout(const Duration(seconds: 5));
       await _clearCache(model.userId);
     } catch (e) {
-      throw Exception('Erro ao atualizar transação');
+      debugPrint('update error: $e');
+      throw Exception('Sem conexão. Verifique sua internet e tente novamente.');
     }
   }
 
   @override
   Future<void> delete(String id) async {
     try {
-      final doc = await _firestore.collection(_collection).doc(id).get();
+      final doc = await _firestore
+          .collection(_collection)
+          .doc(id)
+          .get()
+          .timeout(const Duration(seconds: 5));
       final data = doc.data();
       final userId = data?['userId'];
-      await _firestore.collection(_collection).doc(id).delete();
+      await _firestore.collection(_collection).doc(id).delete().timeout(const Duration(seconds: 5));
       if (userId != null) await _clearCache(userId);
     } catch (e) {
-      throw Exception('Erro ao deletar transação');
+      debugPrint('delete error: $e');
+      throw Exception('Sem conexão. Verifique sua internet e tente novamente.');
     }
   }
 
   @override
   Future<({double totalIncome, double totalExpense})> getAggregates(String userId) async {
     try {
-      final base = _firestore
-          .collection(_collection)
-          .where('userId', isEqualTo: userId);
+      final base = _firestore.collection(_collection).where('userId', isEqualTo: userId);
 
       final incomeResult = await base
           .where('type', isEqualTo: 'income')
           .aggregate(sum('value'))
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 5));
 
       final expenseResult = await base
           .where('type', isEqualTo: 'expense')
           .aggregate(sum('value'))
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 5));
 
-      return (
+      final result = (
         totalIncome: (incomeResult.getSum('value') ?? 0).toDouble(),
         totalExpense: (expenseResult.getSum('value') ?? 0).toDouble(),
       );
+      await _saveToCache(userId, [], aggregates: result);
+      return result;
     } catch (e, st) {
-      // Composite index not yet available — fall back to client-side computation
       if (e.toString().contains('failed-precondition') ||
           e.toString().contains('FAILED_PRECONDITION')) {
         debugPrint('getAggregates: index not ready, using fallback');
-        return _computeAggregatesFallback(userId);
+        final fallback = await _computeAggregatesFallback(userId);
+        await _saveToCache(userId, [], aggregates: fallback);
+        return fallback;
       }
       debugPrint('getAggregates error: $e\n$st');
+      final cached = await _readAggregatesFromCache(userId);
+      if (cached != null) return cached;
       throw Exception('Erro ao calcular totais');
     }
   }
 
-  /// Fallback: computes totals with a full collection scan.
-  /// Used while the composite index for sum() aggregation is not yet available.
   Future<({double totalIncome, double totalExpense})> _computeAggregatesFallback(
-      String userId) async {
+    String userId,
+  ) async {
     try {
       final snapshot = await _firestore
           .collection(_collection)
@@ -291,10 +352,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       final ref = _storage.ref().child('receipts/$userId/$fileName');
       final bytes = await file.readAsBytes();
-      final uploadTask = await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      return await uploadTask.ref.getDownloadURL();
+      final uploadTask = await ref
+          .putData(bytes, SettableMetadata(contentType: 'image/jpeg'))
+          .timeout(const Duration(seconds: 10));
+      return await uploadTask.ref.getDownloadURL().timeout(const Duration(seconds: 5));
     } catch (e) {
-      throw Exception('Erro ao fazer upload');
+      debugPrint('uploadReceipt error: $e');
+      throw Exception('Sem conexão. Verifique sua internet e tente novamente.');
     }
   }
 
@@ -302,9 +366,10 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<void> deleteReceipt(String url) async {
     try {
       final ref = _storage.refFromURL(url);
-      await ref.delete();
+      await ref.delete().timeout(const Duration(seconds: 5));
     } catch (e) {
-      throw Exception('Erro ao deletar arquivo');
+      debugPrint('deleteReceipt error: $e');
+      throw Exception('Sem conexão. Verifique sua internet e tente novamente.');
     }
   }
 }

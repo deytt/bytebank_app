@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/models/transaction_model.dart';
 import '../../domain/entities/transaction.dart';
+import '../../domain/repositories/transaction_repository.dart';
 import '../../domain/usecases/get_transactions_usecase.dart';
 import '../../domain/usecases/get_transaction_aggregates_usecase.dart';
 import '../../domain/usecases/add_transaction_usecase.dart';
@@ -66,39 +67,48 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     _currentDateRangeDays = event.dateRangeDays;
     _currentType = event.type;
 
+    TransactionPage? page;
+    ({double totalIncome, double totalExpense})? aggregates;
+    TransactionPage? chartPage;
+
     try {
-      final results = await Future.wait([
-        _getTransactions(
-          event.userId,
-          category: event.category,
-          searchTitle: event.searchTitle,
-          hasReceipt: event.hasReceipt,
-          dateRangeDays: event.dateRangeDays,
-          type: event.type,
-        ),
-        _getAggregates(event.userId),
-        _getTransactions(event.userId, limit: 200),
-      ]);
+      page = await _getTransactions(
+        event.userId,
+        category: event.category,
+        searchTitle: event.searchTitle,
+        hasReceipt: event.hasReceipt,
+        dateRangeDays: event.dateRangeDays,
+        type: event.type,
+      );
+    } catch (_) {}
 
-      _lastCursor = (results[0] as dynamic).cursor;
+    try {
+      aggregates = await _getAggregates(event.userId);
+    } catch (_) {}
 
-      final page = results[0] as dynamic;
-      final aggregates = results[1] as ({double totalIncome, double totalExpense});
-      final chartPage = results[2] as dynamic;
+    try {
+      chartPage = await _getTransactions(event.userId, limit: 200);
+    } catch (_) {}
 
-      if (emit.isDone) return;
-      emit(TransactionLoaded(
-        transactions: (page.transactions as List).cast<TransactionModel>(),
-        allTransactions: (chartPage.transactions as List).cast<TransactionModel>(),
-        totalIncome: aggregates.totalIncome,
-        totalExpense: aggregates.totalExpense,
-        hasMore: page.hasMore as bool,
-      ));
-    } catch (e) {
-      debugPrint('LoadTransactions error: $e');
-      if (emit.isDone) return;
-      emit(TransactionError(e.toString().replaceAll('Exception: ', '')));
+    if (emit.isDone) return;
+
+    if (page == null && aggregates == null) {
+      emit(const TransactionError('Sem conexão e sem dados em cache'));
+      return;
     }
+
+    final isFromCache = page == null || aggregates == null || chartPage == null;
+
+    _lastCursor = page?.cursor;
+
+    emit(TransactionLoaded(
+      transactions: page?.transactions.cast<TransactionModel>() ?? [],
+      allTransactions: chartPage?.transactions.cast<TransactionModel>() ?? [],
+      totalIncome: aggregates?.totalIncome ?? 0,
+      totalExpense: aggregates?.totalExpense ?? 0,
+      hasMore: page?.hasMore ?? false,
+      isFromCache: isFromCache,
+    ));
   }
 
   Future<void> _onLoadMoreTransactions(
@@ -121,6 +131,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
         _currentUserId!,
         pageToken: _lastCursor,
         category: _currentCategory,
+        dateRangeDays: _currentDateRangeDays,
+        type: _currentType,
       );
 
       _lastCursor = page.cursor;
@@ -235,40 +247,46 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   Future<void> _reloadAll(Emitter<TransactionState> emit, String successMessage) async {
     if (_currentUserId == null) return;
 
+    TransactionPage? page;
+    ({double totalIncome, double totalExpense})? aggregates;
+    TransactionPage? chartPage;
+
     try {
-      final results = await Future.wait([
-        _getTransactions(
-          _currentUserId!,
-          category: _currentCategory,
-          searchTitle: _currentSearchTitle,
-          hasReceipt: _currentHasReceipt,
-          dateRangeDays: _currentDateRangeDays,
-          type: _currentType,
-        ),
-        _getAggregates(_currentUserId!),
-        _getTransactions(_currentUserId!, limit: 200),
-      ]);
-
-      _lastCursor = (results[0] as dynamic).cursor;
-
-      final page = results[0] as dynamic;
-      final aggregates = results[1] as ({double totalIncome, double totalExpense});
-      final chartPage = results[2] as dynamic;
-
-      final loaded = TransactionLoaded(
-        transactions: (page.transactions as List).cast<TransactionModel>(),
-        allTransactions: (chartPage.transactions as List).cast<TransactionModel>(),
-        totalIncome: aggregates.totalIncome,
-        totalExpense: aggregates.totalExpense,
-        hasMore: page.hasMore as bool,
+      page = await _getTransactions(
+        _currentUserId!,
+        category: _currentCategory,
+        searchTitle: _currentSearchTitle,
+        hasReceipt: _currentHasReceipt,
+        dateRangeDays: _currentDateRangeDays,
+        type: _currentType,
       );
+    } catch (_) {}
 
-      if (emit.isDone) return;
-      emit(TransactionActionSuccess(message: successMessage, data: loaded));
-    } catch (e) {
-      debugPrint('ReloadAll error: $e');
-      if (emit.isDone) return;
-      emit(TransactionError(e.toString().replaceAll('Exception: ', '')));
+    try {
+      aggregates = await _getAggregates(_currentUserId!);
+    } catch (_) {}
+
+    try {
+      chartPage = await _getTransactions(_currentUserId!, limit: 200);
+    } catch (_) {}
+
+    if (emit.isDone) return;
+
+    if (page == null && aggregates == null) {
+      emit(const TransactionError('Sem conexão e sem dados em cache'));
+      return;
     }
+
+    _lastCursor = page?.cursor;
+
+    final loaded = TransactionLoaded(
+      transactions: page?.transactions.cast<TransactionModel>() ?? [],
+      allTransactions: chartPage?.transactions.cast<TransactionModel>() ?? [],
+      totalIncome: aggregates?.totalIncome ?? 0,
+      totalExpense: aggregates?.totalExpense ?? 0,
+      hasMore: page?.hasMore ?? false,
+    );
+
+    emit(TransactionActionSuccess(message: successMessage, data: loaded));
   }
 }

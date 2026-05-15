@@ -5,8 +5,6 @@ class TransactionPage {
   final List<Transaction> transactions;
   final bool hasMore;
 
-  /// Opaque cursor used internally by the repository implementation for pagination.
-  /// The BLoC stores it and passes it back on the next page request.
   final Object? cursor;
 
   const TransactionPage({

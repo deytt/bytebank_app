@@ -28,6 +28,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   String _category = 'Alimentação';
   DateTime _date = DateTime.now();
   XFile? _receiptFile;
+  bool _isSubmitting = false;
 
   final List<String> _categories = [
     'Alimentação',
@@ -89,6 +90,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) return;
 
+    setState(() => _isSubmitting = true);
+
     final transaction = TransactionModel(
       id: widget.transaction?.id,
       userId: authState.user.id,
@@ -132,6 +135,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (state is TransactionActionSuccess) {
           Navigator.pop(context);
         } else if (state is TransactionActionFailure) {
+          setState(() => _isSubmitting = false);
           final t = AppTheme.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -142,7 +146,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         }
       },
       builder: (context, state) {
-        final isSubmitting = state is TransactionLoaded && state.isSubmitting;
         final t = AppTheme.of(context);
 
         return Scaffold(
@@ -356,12 +359,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         duration: const Duration(milliseconds: 200),
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isSubmitting ? null : _submit,
+                          onPressed: _isSubmitting ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 0,
                           ),
-                          child: isSubmitting
+                          child: _isSubmitting
                               ? SizedBox(
                                   height: 20,
                                   width: 20,
