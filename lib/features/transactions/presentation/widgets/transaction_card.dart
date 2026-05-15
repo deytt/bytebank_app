@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../features/transactions/data/models/transaction_model.dart';
-import '../features/transactions/domain/entities/transaction.dart' show TransactionType;
-import '../core/theme/app_theme.dart';
-import '../core/utils/formatters.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/formatters.dart';
+import '../../data/models/transaction_model.dart';
+import '../../domain/entities/transaction.dart' show TransactionType;
 
 class TransactionCard extends StatelessWidget {
   final TransactionModel transaction;

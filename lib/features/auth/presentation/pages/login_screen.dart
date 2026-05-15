@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../core/theme/app_theme.dart';
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../widgets/custom_input.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/custom_input.dart';
+import '../bloc/auth_bloc.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

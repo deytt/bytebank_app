@@ -4,9 +4,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/transactions/presentation/bloc/transaction_bloc.dart';
-import 'screens/splash/splash_screen.dart';
-import 'screens/login/login_screen.dart';
-import 'screens/dashboard/dashboard_screen.dart';
+import 'features/auth/presentation/pages/login_screen.dart';
+import 'features/dashboard/presentation/pages/dashboard_screen.dart';
+import 'features/splash/presentation/pages/splash_screen.dart';
 
 class App extends StatefulWidget {
   const App({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/formatters.dart';
-import '../../../features/transactions/presentation/bloc/transaction_bloc.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/formatters.dart';
+import '../../../transactions/presentation/bloc/transaction_bloc.dart';
 
 class DashboardBalanceCard extends StatefulWidget {
   final TransactionLoaded? loaded;

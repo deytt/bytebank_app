@@ -112,9 +112,11 @@ lib/
 │   │   └── injection_container.dart             # Registro get_it (repositórios + use cases)
 │   ├── theme/
 │   │   └── app_theme.dart                       # Tema global
-│   └── utils/
-│       ├── encryption_service.dart              # Serviço AES-256 CBC (chave por dispositivo)
-│       └── formatters.dart                      # Formatadores de data e moeda
+│   ├── utils/
+│   │   ├── encryption_service.dart              # Serviço AES-256 CBC (chave por dispositivo)
+│   │   └── formatters.dart                      # Formatadores de data e moeda
+│   └── widgets/
+│       └── custom_input.dart                    # Input compartilhado entre features
 ├── features/
 │   ├── auth/
 │   │   ├── domain/
@@ -125,37 +127,39 @@ lib/
 │   │   │   ├── models/user_model.dart
 │   │   │   └── repositories/auth_repository_impl.dart
 │   │   └── presentation/
-│   │       └── bloc/                            # auth_bloc, auth_event, auth_state
-│   └── transactions/
-│       ├── domain/
-│       │   ├── entities/transaction.dart
-│       │   ├── repositories/transaction_repository.dart
-│       │   └── usecases/                        # get_transactions, get_aggregates, add, update, delete
-│       ├── data/
-│       │   ├── models/transaction_model.dart    # Serialização + criptografia do título
-│       │   └── repositories/transaction_repository_impl.dart  # Firestore + Hive cache
-│       └── presentation/
-│           └── bloc/                            # transaction_bloc, transaction_event, transaction_state
-├── screens/
-│   ├── splash/
-│   │   └── splash_screen.dart
-│   ├── login/
-│   │   └── login_screen.dart                   # Login (e-mail + Google OAuth)
+│   │       ├── bloc/                            # auth_bloc, auth_event, auth_state
+│   │       └── pages/
+│   │           └── login_screen.dart            # Login (e-mail + Google OAuth)
+│   ├── transactions/
+│   │   ├── domain/
+│   │   │   ├── entities/transaction.dart
+│   │   │   ├── repositories/transaction_repository.dart
+│   │   │   └── usecases/                        # get_transactions, get_aggregates, add, update, delete
+│   │   ├── data/
+│   │   │   ├── models/transaction_model.dart    # Serialização + criptografia do título
+│   │   │   └── repositories/transaction_repository_impl.dart  # Firestore + Hive cache
+│   │   └── presentation/
+│   │       ├── bloc/                            # transaction_bloc, transaction_event, transaction_state
+│   │       ├── pages/
+│   │       │   ├── transaction_list_screen.dart # Lista com filtros e paginação
+│   │       │   └── transaction_form_screen.dart # Formulário de transação
+│   │       └── widgets/
+│   │           └── transaction_card.dart        # Card de transação
 │   ├── dashboard/
-│   │   ├── dashboard_screen.dart               # Dashboard principal
-│   │   └── widgets/
-│   │       ├── balance_card.dart               # Card de saldo/receitas/despesas
-│   │       ├── chart_card.dart                 # Gráfico de evolução
-│   │       ├── services_section.dart           # Seções de serviços
-│   │       ├── stories_section.dart            # Stories de ofertas
-│   │       ├── carousel_section.dart           # Carrossel promocional
-│   │       └── user_account_modal.dart         # Modal de dados da conta
-│   └── transactions/
-│       ├── transaction_list_screen.dart        # Lista com filtros e paginação
-│       └── transaction_form_screen.dart        # Formulário de transação
-└── widgets/
-    ├── transaction_card.dart                   # Card de transação reutilizável
-    └── custom_input.dart                       # Input customizado
+│   │   └── presentation/
+│   │       ├── pages/
+│   │       │   └── dashboard_screen.dart        # Dashboard principal
+│   │       └── widgets/
+│   │           ├── balance_card.dart            # Card de saldo/receitas/despesas
+│   │           ├── chart_card.dart              # Gráfico de evolução
+│   │           ├── services_section.dart        # Seções de serviços
+│   │           ├── stories_section.dart         # Stories de ofertas
+│   │           ├── carousel_section.dart        # Carrossel promocional
+│   │           └── user_account_modal.dart      # Modal de dados da conta
+│   └── splash/
+│       └── presentation/
+│           └── pages/
+│               └── splash_screen.dart
 ```
 
 ## Categorias

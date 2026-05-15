@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/theme/app_theme.dart';
-import '../../features/auth/data/models/user_model.dart';
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../features/transactions/presentation/bloc/transaction_bloc.dart';
-import '../transactions/transaction_list_screen.dart';
-import 'widgets/balance_card.dart';
-import 'widgets/carousel_section.dart';
-import 'widgets/chart_card.dart';
-import 'widgets/services_section.dart';
-import 'widgets/stories_section.dart';
-import 'widgets/user_account_modal.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../transactions/presentation/bloc/transaction_bloc.dart';
+import '../../../transactions/presentation/pages/transaction_list_screen.dart';
+import '../widgets/balance_card.dart';
+import '../widgets/carousel_section.dart';
+import '../widgets/chart_card.dart';
+import '../widgets/services_section.dart';
+import '../widgets/stories_section.dart';
+import '../widgets/user_account_modal.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback onToggleThemeMode;
