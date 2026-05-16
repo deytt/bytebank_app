@@ -1,4 +1,5 @@
-import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+
 import '../entities/transaction.dart';
 import '../repositories/transaction_repository.dart';
 
@@ -7,10 +8,10 @@ class AddTransactionUseCase {
 
   AddTransactionUseCase(this._repository);
 
-  Future<void> call(Transaction transaction, {XFile? receiptFile}) async {
+  Future<void> call(Transaction transaction, {Uint8List? receiptBytes}) async {
     String? receiptUrl;
-    if (receiptFile != null) {
-      receiptUrl = await _repository.uploadReceipt(receiptFile, transaction.userId);
+    if (receiptBytes != null) {
+      receiptUrl = await _repository.uploadReceipt(receiptBytes, transaction.userId);
     }
     final withReceipt = transaction.copyWith(receiptUrl: receiptUrl);
     await _repository.add(withReceipt);

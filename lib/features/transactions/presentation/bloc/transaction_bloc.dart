@@ -3,7 +3,6 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../data/models/transaction_model.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../../domain/usecases/get_transactions_usecase.dart';
@@ -102,8 +101,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     _lastCursor = page?.cursor;
 
     emit(TransactionLoaded(
-      transactions: page?.transactions.cast<TransactionModel>() ?? [],
-      allTransactions: chartPage?.transactions.cast<TransactionModel>() ?? [],
+      transactions: page?.transactions ?? [],
+      allTransactions: chartPage?.transactions ?? [],
       totalIncome: aggregates?.totalIncome ?? 0,
       totalExpense: aggregates?.totalExpense ?? 0,
       hasMore: page?.hasMore ?? false,
@@ -140,7 +139,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       emit(current.copyWith(
         transactions: [
           ...current.transactions,
-          ...page.transactions.cast<TransactionModel>(),
+          ...page.transactions,
         ],
         hasMore: page.hasMore,
         isLoadingMore: false,
@@ -163,7 +162,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     }
 
     try {
-      await _addTransaction(event.transaction, receiptFile: event.receiptFile);
+      final receiptBytes = await event.receiptFile?.readAsBytes();
+      await _addTransaction(event.transaction, receiptBytes: receiptBytes);
       await _reloadAll(emit, 'Transação adicionada com sucesso');
     } catch (e) {
       debugPrint('AddTransaction error: $e');
@@ -192,7 +192,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     }
 
     try {
-      await _updateTransaction(event.transaction, receiptFile: event.receiptFile);
+      final receiptBytes = await event.receiptFile?.readAsBytes();
+      await _updateTransaction(event.transaction, receiptBytes: receiptBytes);
       await _reloadAll(emit, 'Transação atualizada com sucesso');
     } catch (e) {
       debugPrint('UpdateTransaction error: $e');
@@ -280,8 +281,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     _lastCursor = page?.cursor;
 
     final loaded = TransactionLoaded(
-      transactions: page?.transactions.cast<TransactionModel>() ?? [],
-      allTransactions: chartPage?.transactions.cast<TransactionModel>() ?? [],
+      transactions: page?.transactions ?? [],
+      allTransactions: chartPage?.transactions ?? [],
       totalIncome: aggregates?.totalIncome ?? 0,
       totalExpense: aggregates?.totalExpense ?? 0,
       hasMore: page?.hasMore ?? false,

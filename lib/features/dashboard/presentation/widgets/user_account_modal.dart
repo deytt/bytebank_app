@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../auth/data/models/user_model.dart';
+import '../../../auth/domain/entities/user.dart';
 
 class DashboardUserAvatar extends StatelessWidget {
-  final UserModel user;
+  final User user;
 
   const DashboardUserAvatar({super.key, required this.user});
 
@@ -29,7 +29,7 @@ class DashboardUserAvatar extends StatelessWidget {
 }
 
 class UserAccountModal extends StatelessWidget {
-  final UserModel user;
+  final User user;
 
   const UserAccountModal({super.key, required this.user});
 

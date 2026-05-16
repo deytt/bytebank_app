@@ -1,4 +1,5 @@
-import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+
 import '../entities/transaction.dart';
 
 class TransactionPage {
@@ -34,7 +35,7 @@ abstract class TransactionRepository {
 
   Future<({double totalIncome, double totalExpense})> getAggregates(String userId);
 
-  Future<String> uploadReceipt(XFile file, String userId);
+  Future<String> uploadReceipt(Uint8List bytes, String userId);
 
   Future<void> deleteReceipt(String url);
 }

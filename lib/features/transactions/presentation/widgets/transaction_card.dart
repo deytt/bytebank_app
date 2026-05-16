@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../data/models/transaction_model.dart';
-import '../../domain/entities/transaction.dart' show TransactionType;
+import '../../domain/entities/transaction.dart';
 
 class TransactionCard extends StatelessWidget {
-  final TransactionModel transaction;
+  final Transaction transaction;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
 

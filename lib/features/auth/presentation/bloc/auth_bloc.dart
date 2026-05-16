@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../data/models/user_model.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/watch_auth_state_usecase.dart';
 import '../../domain/usecases/sign_in_usecase.dart';
@@ -43,14 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _watchAuthState(),
       onData: (user) {
         if (user != null) {
-          return AuthAuthenticated(
-            UserModel(
-              id: user.id,
-              email: user.email,
-              displayName: user.displayName,
-              photoUrl: user.photoUrl,
-            ),
-          );
+          return AuthAuthenticated(user);
         }
         return const AuthUnauthenticated();
       },
@@ -63,12 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await _signIn(event.email, event.password);
       if (user != null) {
-        emit(AuthAuthenticated(UserModel(
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          photoUrl: user.photoUrl,
-        )));
+        emit(AuthAuthenticated(user));
       } else {
         emit(const AuthError('Falha ao autenticar'));
       }
@@ -82,12 +69,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await _signUp(event.email, event.password);
       if (user != null) {
-        emit(AuthAuthenticated(UserModel(
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          photoUrl: user.photoUrl,
-        )));
+        emit(AuthAuthenticated(user));
       } else {
         emit(const AuthError('Falha ao criar conta'));
       }
@@ -104,12 +86,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await _signInWithGoogle();
       if (user != null) {
-        emit(AuthAuthenticated(UserModel(
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          photoUrl: user.photoUrl,
-        )));
+        emit(AuthAuthenticated(user));
       } else {
         emit(const AuthUnauthenticated());
       }

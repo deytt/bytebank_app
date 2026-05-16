@@ -1,8 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/encryption_service.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transaction_repository.dart';
@@ -343,15 +344,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<String> uploadReceipt(XFile file, String userId) async {
+  Future<String> uploadReceipt(Uint8List bytes, String userId) async {
     try {
-      final fileSize = await file.length();
-      if (fileSize > _maxUploadSizeBytes) {
+      if (bytes.length > _maxUploadSizeBytes) {
         throw Exception('Arquivo muito grande. Limite: 30 MB');
       }
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       final ref = _storage.ref().child('receipts/$userId/$fileName');
-      final bytes = await file.readAsBytes();
       final uploadTask = await ref
           .putData(bytes, SettableMetadata(contentType: 'image/jpeg'))
           .timeout(const Duration(seconds: 10));

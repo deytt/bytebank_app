@@ -16,7 +16,7 @@ class AuthLoading extends AuthState {
 }
 
 class AuthAuthenticated extends AuthState {
-  final UserModel user;
+  final User user;
 
   const AuthAuthenticated(this.user);
 

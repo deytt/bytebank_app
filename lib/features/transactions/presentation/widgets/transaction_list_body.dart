@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/models/transaction_model.dart';
+import '../../domain/entities/transaction.dart';
 import '../bloc/transaction_bloc.dart';
 import '../pages/transaction_form_screen.dart';
 import 'transaction_card.dart';
 
 class TransactionListBody extends StatelessWidget {
-  final List<TransactionModel> transactions;
+  final List<Transaction> transactions;
   final bool isLoading;
   final bool isLoadingMore;
   final bool hasMore;
@@ -104,7 +104,7 @@ class _TransactionListEmpty extends StatelessWidget {
   }
 }
 
-Future<void> confirmDeleteTransaction(BuildContext context, TransactionModel transaction) async {
+Future<void> confirmDeleteTransaction(BuildContext context, Transaction transaction) async {
   final confirm = await showDialog<bool>(
     context: context,
     builder: (ctx) {

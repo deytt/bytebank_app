@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../auth/data/models/user_model.dart';
+import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../transactions/presentation/bloc/transaction_bloc.dart';
 import '../../../transactions/presentation/pages/transaction_list_screen.dart';
@@ -68,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  void _showUserModal(BuildContext context, UserModel user) {
+  void _showUserModal(BuildContext context, User user) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -137,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  AppBar _buildAppBar(BuildContext context, UserModel? user) {
+  AppBar _buildAppBar(BuildContext context, User? user) {
     return AppBar(
       title: SlideTransition(
         position: headerSlide,

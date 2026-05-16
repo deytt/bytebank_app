@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../transactions/data/models/transaction_model.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 
 enum ChartPeriod { total, last12Months, last3Months }
@@ -10,7 +9,7 @@ enum ChartPeriod { total, last12Months, last3Months }
 enum ChartType { line, bar, pie }
 
 class DashboardChartCard extends StatefulWidget {
-  final List<TransactionModel> transactions;
+  final List<Transaction> transactions;
 
   const DashboardChartCard({super.key, required this.transactions});
 
@@ -184,7 +183,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     );
   }
 
-  List<_MonthData> _getChartData(List<TransactionModel> transactions) {
+  List<_MonthData> _getChartData(List<Transaction> transactions) {
     final now = DateTime.now();
     DateTime startDate;
 
@@ -197,7 +196,10 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
         break;
       case ChartPeriod.total:
         if (transactions.isEmpty) return [];
-        final oldest = transactions.reduce((a, b) => a.date.isBefore(b.date) ? a : b);
+        final oldest = transactions.fold<Transaction>(
+          transactions.first,
+          (prev, t) => t.date.isBefore(prev.date) ? t : prev,
+        );
         startDate = DateTime(oldest.date.year, oldest.date.month, 1);
         break;
     }
@@ -235,7 +237,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     return result;
   }
 
-  List<TransactionModel> _filterByPeriod(List<TransactionModel> transactions) {
+  List<Transaction> _filterByPeriod(List<Transaction> transactions) {
     if (_selectedPeriod == ChartPeriod.total) return List.from(transactions);
     final now = DateTime.now();
     final startDate = _selectedPeriod == ChartPeriod.last3Months
@@ -244,7 +246,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     return transactions.where((t) => !t.date.isBefore(startDate)).toList();
   }
 
-  Map<String, double> _getPieChartData(List<TransactionModel> transactions) {
+  Map<String, double> _getPieChartData(List<Transaction> transactions) {
     final expenses = _filterByPeriod(transactions)
         .where((t) => t.type == TransactionType.expense)
         .toList();
@@ -270,7 +272,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     return result;
   }
 
-  Widget _buildLineChart(List<TransactionModel> transactions) {
+  Widget _buildLineChart(List<Transaction> transactions) {
     final t = AppTheme.of(context);
     final data = _getChartData(transactions);
     if (data.isEmpty) return _buildEmptyChart(context);
@@ -383,7 +385,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     );
   }
 
-  Widget _buildBarChart(List<TransactionModel> transactions) {
+  Widget _buildBarChart(List<Transaction> transactions) {
     final t = AppTheme.of(context);
     final data = _getChartData(transactions);
     if (data.isEmpty) return _buildEmptyChart(context);
@@ -479,7 +481,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     );
   }
 
-  Widget _buildPieChart(List<TransactionModel> transactions) {
+  Widget _buildPieChart(List<Transaction> transactions) {
     final data = _getPieChartData(transactions);
     if (data.isEmpty) return _buildEmptyChart(context);
 
@@ -551,7 +553,7 @@ class _DashboardChartCardState extends State<DashboardChartCard> {
     );
   }
 
-  Widget _buildChartLegend(List<TransactionModel> transactions) {
+  Widget _buildChartLegend(List<Transaction> transactions) {
     final t = AppTheme.of(context);
     final palette = _piePalette(t);
     if (_selectedChartType == ChartType.pie) {

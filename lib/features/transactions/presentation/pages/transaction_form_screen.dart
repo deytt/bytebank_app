@@ -6,12 +6,11 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/custom_input.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../data/models/transaction_model.dart';
-import '../../domain/entities/transaction.dart' show TransactionType;
+import '../../domain/entities/transaction.dart';
 import '../bloc/transaction_bloc.dart';
 
 class TransactionFormScreen extends StatefulWidget {
-  final TransactionModel? transaction;
+  final Transaction? transaction;
 
   const TransactionFormScreen({super.key, this.transaction});
 
@@ -92,7 +91,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     setState(() => _isSubmitting = true);
 
-    final transaction = TransactionModel(
+    final transaction = Transaction(
       id: widget.transaction?.id,
       userId: authState.user.id,
       title: _titleController.text.trim(),
@@ -105,12 +104,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     if (widget.transaction == null) {
       context.read<TransactionBloc>().add(
-            AddTransactionRequested(transaction: transaction, receiptFile: _receiptFile),
-          );
+        AddTransactionRequested(transaction: transaction, receiptFile: _receiptFile),
+      );
     } else {
       context.read<TransactionBloc>().add(
-            UpdateTransactionRequested(transaction: transaction, receiptFile: _receiptFile),
-          );
+        UpdateTransactionRequested(transaction: transaction, receiptFile: _receiptFile),
+      );
     }
   }
 
@@ -119,10 +118,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       width: double.infinity,
       decoration: AppTheme.of(context).formSectionDecoration,
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
 
@@ -137,12 +133,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         } else if (state is TransactionActionFailure) {
           setState(() => _isSubmitting = false);
           final t = AppTheme.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: t.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: t.error));
         }
       },
       builder: (context, state) {
@@ -166,9 +159,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             decoration: BoxDecoration(gradient: t.transactionScreenBackgroundGradient),
             child: Theme(
               data: Theme.of(context).copyWith(
-                inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
-                      fillColor: t.surface.withValues(alpha: 0.55),
-                    ),
+                inputDecorationTheme: Theme.of(
+                  context,
+                ).inputDecorationTheme.copyWith(fillColor: t.surface.withValues(alpha: 0.55)),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
@@ -302,10 +295,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       _formSection(
                         context,
                         children: [
-                          Text(
-                            'Recibo (opcional)',
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
+                          Text('Recibo (opcional)', style: Theme.of(context).textTheme.labelMedium),
                           const SizedBox(height: 10),
                           if (_receiptFile != null)
                             _ReceiptPreview(
@@ -322,9 +312,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               decoration: BoxDecoration(
                                 color: t.surface.withValues(alpha: 0.45),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: t.primaryLight.withValues(alpha: 0.2),
-                                ),
+                                border: Border.all(color: t.primaryLight.withValues(alpha: 0.2)),
                               ),
                               child: Row(
                                 children: [
@@ -368,10 +356,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               ? SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: t.white,
-                                  ),
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: t.white),
                                 )
                               : Text(isEdit ? 'Atualizar' : 'Adicionar'),
                         ),
@@ -410,10 +395,7 @@ class _ReceiptPreview extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     border: Border.all(color: t.primaryLight.withValues(alpha: 0.25)),
-                    image: DecorationImage(
-                      image: MemoryImage(snapshot.data!),
-                      fit: BoxFit.cover,
-                    ),
+                    image: DecorationImage(image: MemoryImage(snapshot.data!), fit: BoxFit.cover),
                   ),
                 ),
                 Positioned(
@@ -422,9 +404,7 @@ class _ReceiptPreview extends StatelessWidget {
                   child: IconButton(
                     icon: Icon(Icons.close_rounded, color: t.white),
                     onPressed: onRemove,
-                    style: IconButton.styleFrom(
-                      backgroundColor: t.black.withValues(alpha: 0.54),
-                    ),
+                    style: IconButton.styleFrom(backgroundColor: t.black.withValues(alpha: 0.54)),
                   ),
                 ),
               ],
@@ -433,9 +413,7 @@ class _ReceiptPreview extends StatelessWidget {
         }
         return SizedBox(
           height: 200,
-          child: Center(
-            child: CircularProgressIndicator(color: t.primaryLight),
-          ),
+          child: Center(child: CircularProgressIndicator(color: t.primaryLight)),
         );
       },
     );

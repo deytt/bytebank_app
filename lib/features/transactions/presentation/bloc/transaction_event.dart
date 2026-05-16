@@ -35,7 +35,7 @@ class LoadMoreTransactions extends TransactionEvent {
 }
 
 class AddTransactionRequested extends TransactionEvent {
-  final TransactionModel transaction;
+  final Transaction transaction;
   final XFile? receiptFile;
 
   const AddTransactionRequested({required this.transaction, this.receiptFile});
@@ -45,7 +45,7 @@ class AddTransactionRequested extends TransactionEvent {
 }
 
 class UpdateTransactionRequested extends TransactionEvent {
-  final TransactionModel transaction;
+  final Transaction transaction;
   final XFile? receiptFile;
 
   const UpdateTransactionRequested({required this.transaction, this.receiptFile});
@@ -55,7 +55,7 @@ class UpdateTransactionRequested extends TransactionEvent {
 }
 
 class DeleteTransactionRequested extends TransactionEvent {
-  final TransactionModel transaction;
+  final Transaction transaction;
 
   const DeleteTransactionRequested(this.transaction);
 

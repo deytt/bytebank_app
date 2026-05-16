@@ -16,9 +16,9 @@ class TransactionLoading extends TransactionState {
 }
 
 class TransactionLoaded extends TransactionState {
-  final List<TransactionModel> transactions;
+  final List<Transaction> transactions;
 
-  final List<TransactionModel> allTransactions;
+  final List<Transaction> allTransactions;
 
   final double totalIncome;
   final double totalExpense;
@@ -43,8 +43,8 @@ class TransactionLoaded extends TransactionState {
   double get balance => totalIncome - totalExpense;
 
   TransactionLoaded copyWith({
-    List<TransactionModel>? transactions,
-    List<TransactionModel>? allTransactions,
+    List<Transaction>? transactions,
+    List<Transaction>? allTransactions,
     double? totalIncome,
     double? totalExpense,
     bool? hasMore,
