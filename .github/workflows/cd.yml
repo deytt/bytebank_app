@@ -33,7 +33,7 @@ jobs:
         run: flutter pub get
 
       - name: Build APK release
-        run: flutter build apk --release
+        run: flutter build apk --release --build-number=${{ github.run_number }}
 
       - name: Upload para Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
