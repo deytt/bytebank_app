@@ -1,0 +1,45 @@
+name: bytebankapp-cd — Firebase App Distribution
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.8'
+          channel: stable
+          cache: true
+
+      - name: Restaurar keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+
+      - name: Criar key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Build APK release
+        run: flutter build apk --release
+
+      - name: Upload para Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          token: ${{ secrets.FIREBASE_TOKEN }}
+          groups: testers
+          file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: "Commit ${{ github.sha }} por ${{ github.actor }}"

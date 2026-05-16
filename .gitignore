@@ -74,3 +74,8 @@ firepit-log.txt
 **/web/version.json
 
 devtools_options.yaml
+
+# Key Store
+*.jks
+*.keystore
+android/key.properties

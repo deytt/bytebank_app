@@ -46,9 +46,6 @@ void main() {
 
   final tTransaction = makeTransaction();
 
-  TransactionPage makeEmptyPage({bool hasMore = false}) =>
-      TransactionPage(transactions: const [], hasMore: hasMore, cursor: null);
-
   TransactionPage makePage(List<Transaction> txs, {bool hasMore = false}) =>
       TransactionPage(transactions: txs, hasMore: hasMore, cursor: null);
 
