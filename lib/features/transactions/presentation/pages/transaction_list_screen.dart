@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../data/models/transaction_model.dart';
 import '../../domain/entities/transaction.dart' show TransactionType;
 import '../bloc/transaction_bloc.dart';
-import '../widgets/transaction_card.dart';
+import '../widgets/transaction_filters_dialog.dart';
+import '../widgets/transaction_list_body.dart';
+import '../widgets/transaction_search_bar.dart';
 import 'transaction_form_screen.dart';
 
 class TransactionListScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   int? _selectedDateRange;
   TransactionType? _selectedType;
 
-  final List<String> _categories = [
+  static const List<String> _categories = [
     'Alimentação',
     'Transporte',
     'Saúde',
@@ -108,6 +109,27 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       _selectedType != null ||
       _searchController.text.isNotEmpty;
 
+  Future<void> _showFilterDialog() async {
+    final result = await showTransactionFiltersDialog(
+      context,
+      current: TransactionFilters(
+        category: _selectedCategory,
+        hasReceipt: _hasReceipt,
+        dateRange: _selectedDateRange,
+        type: _selectedType,
+      ),
+      categories: _categories,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _selectedCategory = result.category;
+      _hasReceipt = result.hasReceipt;
+      _selectedDateRange = result.dateRange;
+      _selectedType = result.type;
+    });
+    _applyFilters();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<TransactionBloc, TransactionState>(
@@ -153,7 +175,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.filter_list_rounded),
-                onPressed: () => _showFilterDialog(),
+                onPressed: _showFilterDialog,
               ),
             ],
           ),
@@ -165,113 +187,19 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               onRefresh: () async => _clearFilters(),
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Container(
-                      decoration: t.searchFieldShellDecoration,
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: TextField(
-                        controller: _searchController,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          hintText: 'Buscar por título (mín. 3 caracteres)...',
-                          hintStyle: TextStyle(color: t.textSecondary.withValues(alpha: 0.85)),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: t.textSecondary.withValues(alpha: 0.9),
-                          ),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: Icon(
-                                    Icons.close_rounded,
-                                    color: t.textSecondary.withValues(alpha: 0.9),
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _applyFilters();
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: Colors.transparent,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: t.primaryLight.withValues(alpha: 0.45)),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                          helperText:
-                              _searchController.text.isNotEmpty && _searchController.text.length < 3
-                              ? 'Digite pelo menos 3 caracteres'
-                              : null,
-                          helperStyle: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        onChanged: (value) {
-                          setState(() {});
-                          if (value.isEmpty || value.length >= 3) {
-                            Future.delayed(const Duration(milliseconds: 500), () {
-                              if (_searchController.text == value) _applyFilters();
-                            });
-                          }
-                        },
-                      ),
-                    ),
+                  TransactionSearchBar(
+                    controller: _searchController,
+                    onSearch: _applyFilters,
                   ),
                   if (_hasActiveFilters) _buildActiveFiltersRow(),
                   Expanded(
-                    child: isLoading && transactions.isEmpty
-                        ? Center(child: CircularProgressIndicator(color: t.primaryLight))
-                        : transactions.isEmpty
-                        ? _buildEmpty()
-                        : ListView.builder(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: transactions.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == transactions.length) {
-                                if (isLoadingMore) {
-                                  return const Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(child: CircularProgressIndicator()),
-                                  );
-                                }
-                                if (!hasMore) {
-                                  return Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Center(
-                                      child: Text(
-                                        'Todas as transações foram carregadas',
-                                        style: Theme.of(context).textTheme.bodySmall,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
-                              }
-
-                              final transaction = transactions[index];
-                              return TransactionCard(
-                                transaction: transaction,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          TransactionFormScreen(transaction: transaction),
-                                    ),
-                                  );
-                                },
-                                onDelete: () => _confirmDelete(context, transaction),
-                              );
-                            },
-                          ),
+                    child: TransactionListBody(
+                      transactions: transactions,
+                      isLoading: isLoading,
+                      isLoadingMore: isLoadingMore,
+                      hasMore: hasMore,
+                      scrollController: _scrollController,
+                    ),
                   ),
                 ],
               ),
@@ -303,7 +231,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           if (_selectedCategory != null)
-            _FilterChip(
+            TransactionFilterChip(
               label: _selectedCategory!,
               onDeleted: () {
                 setState(() => _selectedCategory = null);
@@ -311,7 +239,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               },
             ),
           if (_hasReceipt != null)
-            _FilterChip(
+            TransactionFilterChip(
               label: _hasReceipt! ? 'Com recibo' : 'Sem recibo',
               onDeleted: () {
                 setState(() => _hasReceipt = null);
@@ -319,7 +247,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               },
             ),
           if (_selectedDateRange != null)
-            _FilterChip(
+            TransactionFilterChip(
               label: 'Últimos $_selectedDateRange dias',
               onDeleted: () {
                 setState(() => _selectedDateRange = null);
@@ -327,7 +255,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               },
             ),
           if (_selectedType != null)
-            _FilterChip(
+            TransactionFilterChip(
               label: _selectedType == TransactionType.income ? 'Receita' : 'Despesa',
               onDeleted: () {
                 setState(() => _selectedType = null);
@@ -335,7 +263,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               },
             ),
           if (_searchController.text.isNotEmpty)
-            _FilterChip(
+            TransactionFilterChip(
               label: 'Busca: "${_searchController.text}"',
               onDeleted: () {
                 _searchController.clear();
@@ -349,274 +277,6 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
             label: const Text('Limpar tudo'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    final t = AppTheme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long_rounded,
-            size: 56,
-            color: t.textSecondary.withValues(alpha: 0.65),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Nenhuma transação encontrada',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: t.textSecondary, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmDelete(BuildContext context, TransactionModel transaction) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final td = AppTheme.of(ctx);
-        return AlertDialog(
-          title: const Text('Confirmar exclusão'),
-          content: const Text('Deseja realmente excluir esta transação?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancelar', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: td.error),
-              child: const Text('Excluir'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm == true && context.mounted) {
-      context.read<TransactionBloc>().add(DeleteTransactionRequested(transaction));
-    }
-  }
-
-  ChoiceChip _buildFilterChoiceChip(
-    BuildContext context, {
-    required String label,
-    required bool selected,
-    required ValueChanged<bool> onSelected,
-  }) {
-    final t = AppTheme.of(context);
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: selected ? t.white : t.textPrimary,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      selected: selected,
-      showCheckmark: false,
-      selectedColor: t.primary,
-      backgroundColor: t.transactionCardFill,
-      side: BorderSide(color: selected ? t.primary : t.neutralBorder),
-      onSelected: onSelected,
-    );
-  }
-
-  void _showFilterDialog() {
-    String? tempCategory = _selectedCategory;
-    bool? tempHasReceipt = _hasReceipt;
-    int? tempDateRange = _selectedDateRange;
-    TransactionType? tempType = _selectedType;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        final td = AppTheme.of(context);
-        return AlertDialog(
-          backgroundColor: td.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Filtros'),
-          content: StatefulBuilder(
-            builder: (context, setDialogState) => SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Categoria', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Todas',
-                        selected: tempCategory == null,
-                        onSelected: (_) => setDialogState(() => tempCategory = null),
-                      ),
-                      ..._categories.map(
-                        (category) => _buildFilterChoiceChip(
-                          context,
-                          label: category,
-                          selected: tempCategory == category,
-                          onSelected: (selected) =>
-                              setDialogState(() => tempCategory = selected ? category : null),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Recibo', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Todos',
-                        selected: tempHasReceipt == null,
-                        onSelected: (_) => setDialogState(() => tempHasReceipt = null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Com recibo',
-                        selected: tempHasReceipt == true,
-                        onSelected: (s) => setDialogState(() => tempHasReceipt = s ? true : null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Sem recibo',
-                        selected: tempHasReceipt == false,
-                        onSelected: (s) => setDialogState(() => tempHasReceipt = s ? false : null),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Período', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Todos',
-                        selected: tempDateRange == null,
-                        onSelected: (_) => setDialogState(() => tempDateRange = null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Últimos 15 dias',
-                        selected: tempDateRange == 15,
-                        onSelected: (s) => setDialogState(() => tempDateRange = s ? 15 : null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Últimos 30 dias',
-                        selected: tempDateRange == 30,
-                        onSelected: (s) => setDialogState(() => tempDateRange = s ? 30 : null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Últimos 90 dias',
-                        selected: tempDateRange == 90,
-                        onSelected: (s) => setDialogState(() => tempDateRange = s ? 90 : null),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Tipo', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Todos',
-                        selected: tempType == null,
-                        onSelected: (_) => setDialogState(() => tempType = null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Receita',
-                        selected: tempType == TransactionType.income,
-                        onSelected: (s) =>
-                            setDialogState(() => tempType = s ? TransactionType.income : null),
-                      ),
-                      _buildFilterChoiceChip(
-                        context,
-                        label: 'Despesa',
-                        selected: tempType == TransactionType.expense,
-                        onSelected: (s) =>
-                            setDialogState(() => tempType = s ? TransactionType.expense : null),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _selectedCategory = tempCategory;
-                  _hasReceipt = tempHasReceipt;
-                  _selectedDateRange = tempDateRange;
-                  _selectedType = tempType;
-                });
-                Navigator.pop(context);
-                _applyFilters();
-              },
-              child: const Text('Aplicar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onDeleted;
-
-  const _FilterChip({required this.label, required this.onDeleted});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppTheme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Chip(
-        label: Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: t.white, fontWeight: FontWeight.w600),
-        ),
-        deleteIcon: Icon(Icons.close_rounded, size: 16, color: t.white),
-        onDeleted: onDeleted,
-        backgroundColor: t.primary,
-        side: BorderSide(color: t.primary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.only(left: 8, right: 4),
       ),
     );
   }
