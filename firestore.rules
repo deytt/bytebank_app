@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Bloqueio padrão — qualquer coleção não mapeada é negada
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /transactions/{transactionId} {
+      // Leitura: apenas o dono do documento
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+
+      // Criação: autenticado, userId do novo doc é o próprio usuário,
+      // campos obrigatórios presentes, value positivo e type válido
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasAll([
+                         'userId', 'title', 'value', 'category', 'type', 'date'
+                       ])
+                    && request.resource.data.value is number
+                    && request.resource.data.value > 0
+                    && request.resource.data.type in ['income', 'expense'];
+
+      // Atualização: dono atual e não pode transferir o documento para outro usuário
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid;
+
+      // Exclusão: apenas o dono
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
+    }
+  }
+}

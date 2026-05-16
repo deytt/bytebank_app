@@ -20,11 +20,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   Map<String, dynamic> _toCacheMap(TransactionModel model) {
     final map = model.toMap();
-    return {
-      ...map,
-      'id': model.id,
-      'date': model.date.millisecondsSinceEpoch,
-    };
+    return {...map, 'id': model.id, 'date': model.date.millisecondsSinceEpoch};
   }
 
   TransactionModel _fromCacheMap(Map map) {
@@ -354,7 +350,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
       final uploadTask = await ref
           .putData(bytes, SettableMetadata(contentType: 'image/jpeg'))
           .timeout(const Duration(seconds: 10));
-      return await uploadTask.ref.getDownloadURL().timeout(const Duration(seconds: 5));
+      return await uploadTask.ref.getDownloadURL().timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('uploadReceipt error: $e');
       throw Exception('Sem conexão. Verifique sua internet e tente novamente.');

@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Bloqueio padrão — qualquer caminho não mapeado é negado
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    match /receipts/{userId}/{fileName} {
+      // Leitura: apenas o dono da pasta
+      allow read: if request.auth != null
+                  && request.auth.uid == userId;
+
+      // Upload: autenticado, dono da pasta, somente imagem, máximo 30 MB
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size <= 30 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+
+      // Exclusão: apenas o dono
+      allow delete: if request.auth != null
+                    && request.auth.uid == userId;
+    }
+  }
+}
