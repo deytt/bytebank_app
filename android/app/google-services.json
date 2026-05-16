@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "1093070321011-cvspi6cr76sh1cn59adjq06e136ktm63.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.postech.bytebankapp",
+            "certificate_hash": "bb98bbdf91c467ce53f8cc431c2e5cc7343d1c75"
+          }
+        },
+        {
           "client_id": "1093070321011-81cc1bqi3l74sifg5nqql0iab0qtudgc.apps.googleusercontent.com",
           "client_type": 3
         }
