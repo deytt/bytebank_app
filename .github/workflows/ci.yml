@@ -1,5 +1,5 @@
 # .github/workflows/ci.yml
-name: bytebankapp-ci
+name: bytebankapp-ci — flutter pub get, analyze, test, build apk debug
 
 on:
   pull_request:
